@@ -26,14 +26,7 @@ class PHasher
         $result = [];
 
         foreach ($images as $key => $comparedImage) {
-            $item = 0;
-            for ($rotation = 0; $rotation <= 270; $rotation += 90) {
-                $newResult = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
-                if ($newResult > $item) {
-                    $item = $newResult;
-                }
-            }
-            $result[$key] = $item;
+            $result[$key] = $this->detect($sourceImage, $comparedImage, $precision);
         }
 
         return $result;
@@ -109,14 +102,8 @@ class PHasher
     ): array {
         $result = [];
 
-        $hash1 = $this->HashImage($sourceImage); // this one should never be rotated
-
         foreach ($images as $key => $comparedImage) {
-            $hash2 = $this->HashImage($comparedImage, $rotation);
-
-            $similarityAfterComparison = $this->compareHashes($hash1, $hash2);
-
-            $result[$key] = round(($similarityAfterComparison / count($hash1) * 100), $precision);
+            $result[$key] = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
         }
 
         return $result;
@@ -138,15 +125,13 @@ class PHasher
         int $rotation = 0,
         int $precision = 1
     ): float {
-        $hash1 = $this->HashImage($sourceImage); // this one should never be rotated
-        $hash2 = $this->HashImage($comparedImage, $rotation);
+        $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
+        $hash2 = $this->hashImage($comparedImage, $rotation);
 
-        $similarityAfterComparison = $this->compareHashes($hash1, $hash2);
-
-        return round(($similarityAfterComparison / count($hash1) * 100), $precision);
+        return $this->compareHashes($hash1, $hash2, $precision);
     }
 
-    private function compareHashes(array $hash1, array $hash2): int
+    private function compareHashes(array $hash1, array $hash2, int $precision): float
     {
         $similarity = count($hash1);
 
@@ -157,7 +142,7 @@ class PHasher
             }
         }
 
-        return $similarity;
+        return round(($similarity / count($hash1) * 100), $precision);
     }
 
     /**
@@ -425,16 +410,6 @@ class PHasher
             return $image;
         }
 
-        if (stripos($image, 'RIFF') !== false) {
-            $imageResource = imagecreatefromwebp($image);
-
-            if (false === $imageResource) {
-                throw new ImageResourceException('Could not create an image resource from file');
-            }
-
-            return $imageResource;
-        }
-
         $imageData = file_get_contents($image);
 
         if (false === $imageData) {
@@ -452,30 +427,6 @@ class PHasher
     public function convertHashToBinaryString(array $hash): string
     {
         return implode('', $hash);
-    }
-
-    /**
-     * Return hexadecimal from an image hash created by hashImage()
-     * @param  array  $hash
-     * @return string
-     */
-    public function convertHashToHexadecimalString(array $hash): string
-    {
-        $i = 0;
-        $nibble = null;
-        $hex = null;
-
-        foreach ($hash as $bit) {
-            $i++;
-            $nibble .= $bit;
-            if ($i === 4) {
-                $hex .= dechex(bindec($nibble));
-                $i = 0;
-                $nibble = null;
-            }
-        }
-
-        return $hex;
     }
 
     /**

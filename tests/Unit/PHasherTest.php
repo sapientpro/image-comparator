@@ -120,19 +120,6 @@ class PHasherTest extends TestCase
         $this->assertSame(96.9, $result);
     }
 
-    public function testCompareHashStringsHexadecimalStrings(): void
-    {
-        $hash1 = $this->pHasher->hashImage('tests/images/forest1.jpg');
-        $hashString1 = $this->pHasher->convertHashToHexadecimalString($hash1);
-
-        $hash2 = $this->pHasher->hashImage('tests/images/forest1-copyrighted.jpg');
-        $hashString2 = $this->pHasher->convertHashToHexadecimalString($hash2);
-
-        $result = $this->pHasher->compareHashStrings($hashString1, $hashString2);
-
-        $this->assertSame(87.5, $result);
-    }
-
     public function testFastHashImage(): void
     {
         $bits = $this->pHasher->fastHashImage('tests/images/flower2.jpg');
@@ -181,18 +168,6 @@ class PHasherTest extends TestCase
         $this->assertSame($expectedString, $resultString);
     }
 
-    public function testConvertToHexadecimalString(): void
-    {
-        //phpcs:ignore
-        $hash = [1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-
-        $expectedHexadecimal = 'f0f8fcf8fcf80000';
-
-        $result = $this->pHasher->convertHashToHexadecimalString($hash);
-
-        $this->assertSame($expectedHexadecimal, $result);
-    }
-
     public static function differentImagesProvider(): array
     {
         return [
@@ -220,6 +195,11 @@ class PHasherTest extends TestCase
             'Similar images' => [
                 'image1' => 'tests/images/forest1.jpg',
                 'image2' => 'tests/images/forest1-copyrighted.jpg',
+                'expectedPercentage' => 90.00
+            ],
+            'Similar images URLs' => [
+                'image1' => 'https://www.gstatic.com/webp/gallery/1.jpg',
+                'image2' => 'https://www.gstatic.com/webp/gallery/1.webp',
                 'expectedPercentage' => 90.00
             ]
         ];
