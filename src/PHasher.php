@@ -3,7 +3,6 @@
 namespace SapientPro\PHasher;
 
 use GdImage;
-use SapientPro\PHasher\Enum\ImageState;
 
 class PHasher
 {
@@ -153,8 +152,6 @@ class PHasher
      * @param GdImage|string $image Filename/path to file or GdImage instance
      * @param int $rotation Create the hash as if the image were rotated by this value.
      * Default is 0, allowed values are 90, 180, 270.
-     * @param ImageState $state Create the hash as though the image were mirrored and/or flipped.
-     * Default value is 0, 1 is mirrored, 2 is flipped, 3 is both mirrored and flipped.
      * @param int $size the size of the thumbnail created from the original image.
      * The hash will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
      * @param string $hashType - hashing type: aHash or dHash
@@ -165,7 +162,6 @@ class PHasher
     public function hashImage(
         GdImage|string $image,
         int $rotation = 0,
-        ImageState $state = ImageState::DEFAULT,
         int $size = 8,
         string $hashType = self::AVERAGE_HASH_TYPE
     ): array {
@@ -206,21 +202,6 @@ class PHasher
                     default:
                         $rx = $x;
                         $ry = $y;
-                }
-
-                switch ($state) {
-                    case ImageState::MIRRORED:
-                        $rx = (($width - $rx) - 1);
-                        break;
-                    case ImageState::FLIPPED:
-                        $ry = ($height - $ry);
-                        break;
-                    case ImageState::MIRRORED_AND_FLIPPED:
-                        $rx = (($width - $rx) - 1);
-                        $ry = ($height - $ry);
-                        break;
-                    default:
-                        break;
                 }
 
                 $rgb = imagecolorsforindex($imageCached, imagecolorat($imageCached, $rx, $ry));
@@ -282,11 +263,11 @@ class PHasher
      * Doesn't support rotation yet and is not actually as fast as it could be due to the multiple looping.
      *
      * @param GdImage|string $image
-     * @param int $scale
+     * @param int $size
      * @return array
      * @throws ImageResourceException
      */
-    public function fastHashImage(GdImage|string $image, int $scale = 8): array
+    public function fastHashImage(GdImage|string $image, int $size = 8): array
     {
         $pHash = [];
 
@@ -296,15 +277,15 @@ class PHasher
         $src_w = imagesx($image);
         $src_h = imagesy($image);
 
-        $rX = $src_w / $scale;
-        $rY = $src_h / $scale;
+        $rX = $src_w / $size;
+        $rY = $src_h / $size;
         $w = 0;
 
-        for ($y = 0; $y < $scale; $y++) {
+        for ($y = 0; $y < $size; $y++) {
             $ow = $w;
             $w = round(($y + 1) * $rY);
             $t = 0;
-            for ($x = 0; $x < $scale; $x++) {
+            for ($x = 0; $x < $size; $x++) {
                 $r = $g = $b = 0;
                 $a = 0;
                 $ot = $t;
@@ -337,10 +318,10 @@ class PHasher
         }
 
         // now hash (I really need to reduce the number of loops here.)
-        for ($x = 0; $x < $scale; $x++) {
+        for ($x = 0; $x < $size; $x++) {
             $avg = floor(array_sum($nhash[$x]) / count(array_filter($nhash[$x])));
 
-            for ($y = 0; $y < $scale; $y++) {
+            for ($y = 0; $y < $size; $y++) {
                 $rgb = $nhash[$x][$y];
                 if ($rgb > $avg) {
                     $pHash[] = 1;
