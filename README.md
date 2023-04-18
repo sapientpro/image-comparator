@@ -74,21 +74,21 @@ Example usage:
 
 We have two images:
 
-![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/forest1.jpg?raw=true)
-![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg?raw=true)
+![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image.png?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image.png?raw=true)
 
 Now, let's compare them:
 
 ```php
 use SapientPro\ImageComparator\ImageComparator;
 
-$image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
-$image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
+$image1 = 'https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image.png?raw=true';
+$image2 = 'https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image.png?raw=true'
 
 $imageComparator = new ImageComparator();
 $similarity = $imageComparator->compare($image1, $image2); //default hashing without rotation
 
-echo $similarity; //95.33
+echo $similarity; //87.5
 ```
 
 The compared image can be rotated by 0 (default), 90, 180 and 270 degrees:
@@ -107,7 +107,7 @@ use SapientPro\ImageComparator\ImageComparator;
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
-$pHasher = new ImageComparator();
+$imageComparator = new ImageComparator();
 $similarity = $imageComparator->detect($image1, $image2); //default hashing without rotation
 
 echo $similarity; //95.33
