@@ -182,9 +182,9 @@ class PHasher
             for ($x = 0; $x < $size; $x++) {
 //                  Instead of rotating the image, we'll rotate the position of the pixels.
 //                  This will allow us to generate a hash
-//                  that can be used to judge if one image is a rotated or flipped version of the other,
+//                  that can be used to judge if one image is a rotated version of the other,
 //                  without actually creating an extra image resource.
-//                  This currently only works at all for 90 degree rotations and mirrors.
+//                  This currently only works at all for 90 degree rotations.
 
                 switch ($rotation) {
                     case 90:
@@ -378,6 +378,16 @@ class PHasher
     }
 
     /**
+     * Return binary string from an image hash created by hashImage()
+     * @param  array  $hash
+     * @return string
+     */
+    public function convertHashToBinaryString(array $hash): string
+    {
+        return implode('', $hash);
+    }
+
+    /**
      * Create an image resource from the file.
      * If the resource (GdImage) is supplied - return the resource
      *
@@ -385,7 +395,7 @@ class PHasher
      * @return GdImage
      * @throws ImageResourceException
      */
-    public function normalizeAsResource(string|GdImage $image): GdImage
+    private function normalizeAsResource(string|GdImage $image): GdImage
     {
         if ($image instanceof GdImage) {
             return $image;
@@ -398,49 +408,6 @@ class PHasher
         }
 
         return imagecreatefromstring($imageData);
-    }
-
-    /**
-     * Return binary string from an image hash created by hashImage()
-     * @param  array  $hash
-     * @return string
-     */
-    public function convertHashToBinaryString(array $hash): string
-    {
-        return implode('', $hash);
-    }
-
-    /**
-     * Return a binary hash as html table, with each cell representing 1 or 0.
-     *
-     * @param  array  $hash
-     * @param  int  $size
-     * @return string
-     */
-    public function convertHashToHtmlTable(array $hash, int $size = 8): string
-    {
-        $index = 0;
-        $table = "<table
-                  cellpadding=\"0\"
-                  cellspacing=\"0\"
-                  style=\"table-layout: fixed;
-                  display:inline-block;\"><tr><td><tbody>";
-
-        for ($x = 0; $x < $size; $x++) {
-            $table .= "<tr>";
-            for ($y = 0; $y < $size; $y++) {
-                $bit = (bool) ($hash[$index]);
-                $bitcolor = ($bit) ? "#ddd" : "#000";
-                $abitcolor = ($bit) ? "#000" : "#fff";
-
-                $style = "width:{$size}px;height:{$size}px;background-color:{$bitcolor};color:{$abitcolor};";
-                $table .= "<td style=\"{$style}text-align:center;padding:0px;\"></td>";
-                $index++;
-            }
-            $table .= "</tr>";
-        }
-        $table .= "</tbody></table>";
-        return $table;
     }
 
     private function arrayAverage(array $array): float
