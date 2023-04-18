@@ -73,8 +73,9 @@ $imageComparator->hashImage('your-images/non-existent-image.jpg'); // SapientPro
 Example usage:
 
 We have two images:
-![Equals1](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1.jpg?raw=true)
-![Equals2](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg?raw=true)
+
+![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/forest1.jpg?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg?raw=true)
 
 Now, let's compare them:
 
