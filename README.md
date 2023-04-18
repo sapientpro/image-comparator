@@ -72,11 +72,11 @@ $pHasher->hashImage('your-images/non-existent-image.jpg'); // SapientPro\PHasher
 Example usage:
 
 We have two images:
-![Equals1](https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg)
+![Equals1](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1.jpg?raw=true)
 
 and
 
-![Equals2](https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg)
+![Equals2](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg?raw=true)
 
 Now, let's compare them:
 
