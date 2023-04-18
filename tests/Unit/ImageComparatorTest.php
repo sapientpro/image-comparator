@@ -22,6 +22,8 @@ class ImageComparatorTest extends TestCase
     public function testCompareSimilarImages(string $image1, string $image2, float $expectedPercentage): void
     {
         $result = $this->imageComparator->compare($image1, $image2);
+        var_dump($result);
+        ob_flush();
 
         $this->assertGreaterThanOrEqual($expectedPercentage, $result);
     }
@@ -196,6 +198,11 @@ class ImageComparatorTest extends TestCase
                 'image1' => 'tests/images/forest1.jpg',
                 'image2' => 'tests/images/forest1-copyrighted.jpg',
                 'expectedPercentage' => 90.00
+            ],
+            'Similar images 2' => [
+                'image1' => 'tests/images/ebay-image.png',
+                'image2' => 'tests/images/amazon-image.png',
+                'expectedPercentage' => 80.00
             ],
             'Similar images URLs' => [
                 'image1' => 'https://www.gstatic.com/webp/gallery/1.jpg',
