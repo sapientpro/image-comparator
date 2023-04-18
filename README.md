@@ -90,6 +90,24 @@ $similarity = $imageComparator->compare($image1, $image2); //default hashing wit
 
 echo $similarity; //87.5
 ```
+The higher the result, the higher the similarity of images.
+
+Let's compare different images:
+
+![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image2.png?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image2.png?raw=true)
+
+```php
+use SapientPro\ImageComparator\ImageComparator;
+
+$image1 = 'https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image2.png?raw=true';
+$image2 = 'https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image2.png?raw=true'
+
+$imageComparator = new ImageComparator();
+$similarity = $imageComparator->compare($image1, $image2); //default hashing without rotation
+
+echo $similarity; //54.7
+```
 
 The compared image can be rotated by 0 (default), 90, 180 and 270 degrees:
 
