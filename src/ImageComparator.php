@@ -1,10 +1,10 @@
 <?php
 
-namespace SapientPro\PHasher;
+namespace SapientPro\ImageComparator;
 
 use GdImage;
 
-class PHasher
+class ImageComparator
 {
     public const AVERAGE_HASH_TYPE = 'aHash';
     public const DIFFERENCE_HASH_TYPE = 'dHash';

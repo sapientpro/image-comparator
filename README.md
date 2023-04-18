@@ -1,7 +1,7 @@
-# PHasher
+# Image Comparator
 
 <!-- TOC -->
-* [PHasher](#phasher)
+* [Image Comparator](#image-comparator)
   * [Installation](#installation)
     * [Prerequisites](#prerequisites)
   * [Usage](#usage)
@@ -17,7 +17,7 @@
       * [compareHashStrings()](#comparehashstrings)
 <!-- TOC -->
 
-PHasher is a library for image comparing and hashing.
+Image Comparator is a library for image comparing and hashing.
 
 Based on https://github.com/kennethrapp/phasher package, with PHP 8 and PHPUnit support.
 The original project was abandoned in November 2017.
@@ -38,56 +38,54 @@ and [phash.org](http://phash.org).
 
 To install the library, run:
 
-`composer require sapientpro/phasher`
+`composer require sapientpro/image-comparator`
 
 ## Usage
 
-`PHasher` is the core class of the library. To get started, you can either inject it or create the instance manually:
+`ImageComparator` is the core class of the library. To get started, you can either inject it or create the instance manually:
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
-public function __construct(private PHasher $pHasher)
+public function __construct(private ImageComparator $imageComparator)
 ```
 
 or
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
-$pHasher = new Phasher()
+$imageComparator = new ImageComparator()
 ```
 
 After that you can use one of the methods available:
+
 ```php
-$pHasher->compare('your-images/your-image1.jpg', 'your-images/your-image12.jpg');
+$imageComparator->compare('your-images/your-image1.jpg', 'your-images/your-image12.jpg');
 ```
 
 If the image path can't be resolved, `ImageResourceException` will be thrown:
 
 ```php
-$pHasher->hashImage('your-images/non-existent-image.jpg'); // SapientPro\PHasher\ImageResourceException: Could not create an image resource from file
+$imageComparator->hashImage('your-images/non-existent-image.jpg'); // SapientPro\ImageComparator\ImageResourceException: Could not create an image resource from file
 ```
 
 Example usage:
 
 We have two images:
 ![Equals1](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1.jpg?raw=true)
-
-and
-
 ![Equals2](https://github.com/sapientpro/phasher/blob/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg?raw=true)
 
 Now, let's compare them:
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
-$pHasher = new PHasher();
-$similarity = $pHasher->compare($image1, $image2); //default hashing without rotation
+$imageComparator = new ImageComparator();
+$similarity = $imageComparator->compare($image1, $image2); //default hashing without rotation
 
 echo $similarity; //95.33
 ```
@@ -95,7 +93,7 @@ echo $similarity; //95.33
 The compared image can be rotated by 0 (default), 90, 180 and 270 degrees:
 
 ```php
-$similarity = $pHasher->compare($image1, $image2, 180); //compared image will be passed upside down
+$similarity = $imageComparator->compare($image1, $image2, 180); //compared image will be passed upside down
 
 echo $similarity; //45.33
 ```
@@ -103,13 +101,13 @@ echo $similarity; //45.33
 You can also use `detect()` method which will rotate the compared image and return the highest percentage of similarity:
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
-$pHasher = new PHasher();
-$similarity = $pHasher->detect($image1, $image2); //default hashing without rotation
+$pHasher = new ImageComparator();
+$similarity = $imageComparator->detect($image1, $image2); //default hashing without rotation
 
 echo $similarity; //95.33
 ```
@@ -118,14 +116,14 @@ With `compareArray()` and `detectArray()` methods you can compare the source ima
 The behaviour is the same as in `compare()` and `detect()` methods.
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 $image3 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest.jpg'
 
-$pHasher = new PHasher();
-$similarity = $pHasher->compareArray(
+$imageComparator = new ImageComparator();
+$similarity = $imageComparator->compareArray(
     $image1,
     [
         'forest' => $image2,
@@ -138,17 +136,17 @@ If needed, you can create a square image resource from another image
 and pass it to `compare()`, `compareArray()`, `detect()`, `detectArray` and `hashImage()` methods:
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
-$pHasher = new PHasher();
+$imageComparator = new ImageComparator();
 
-$squareImage1 = $pHasher->squareImage($image1);
-$squareImage2 = $pHasher->squareImage($image2);
+$squareImage1 = $imageComparator->squareImage($image1);
+$squareImage2 = $imageComparator->squareImage($image2);
 
-$similarity = $pHasher->compare($squareImage1, $squareImage2);
+$similarity = $imageComparator->compare($squareImage1, $squareImage2);
 
 echo $similarity //96.43;
 ```
@@ -156,20 +154,20 @@ echo $similarity //96.43;
 If needed, you can convert the resulting array from `hashImage()` to a binary string and pass it to `compareHashStrings()` method:
 
 ```php
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageComparator;
 
 $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
-$pHasher = new PHasher();
+$imageComparator = new ImageComparator();
 
-$hash1 = $pHasher->hashImage($image1);
-$hash2 = $pHasher->hashImage($image2);
+$hash1 = $imageComparator->hashImage($image1);
+$hash2 = $imageComparator->hashImage($image2);
 
-$hashString1 = $pHasher->convertHashToBinaryString($hash1);
-$hashString2 = $pHasher->convertHashToBinaryString($hash2);
+$hashString1 = $imageComparator->convertHashToBinaryString($hash1);
+$hashString2 = $imageComparator->convertHashToBinaryString($hash2);
 
-$similarity = $pHasher->compareHashStrings($hashString1, $hashString2);
+$similarity = $imageComparator->compareHashStrings($hashString1, $hashString2);
 
 echo $similarity //96.43;
 ```
@@ -181,7 +179,7 @@ echo $similarity //96.43;
 Create a perceptual hash from an image. Returns an array of individual bits containing 0 and 1
 
 ```php
-$pHasher->hashImage('your-images/your-image.jpg');
+$imageComparator->hashImage('your-images/your-image.jpg');
 ```
 
 The method accepts the following arguments:
@@ -195,7 +193,7 @@ the hash size will be the square of this (so a value of 8 will build a hash out 
 Accepted values are _"aHash"_ and _"dHash"_ for average and difference hashing respectively
 
 ```php
-$pHasher->hashImage(image: 'your-images/your-image.jpg', rotation: 90, size: 16, hashType: 'dHash');
+$imageComparator->hashImage(image: 'your-images/your-image.jpg', rotation: 90, size: 16, hashType: 'dHash');
 ```
 
 #### fastHashImage()
@@ -214,7 +212,7 @@ Optionally accepts `$size` argument which determines the size of the hash
 Returns the same array as `hashImage()`
 
 ```php
-$pHasher->fastHashImage(image: 'your-images/your-image.jpg', size: 16);
+$imageComparator->fastHashImage(image: 'your-images/your-image.jpg', size: 16);
 ```
 
 #### compare()
@@ -228,7 +226,7 @@ Accepts the following arguments:
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
-$pHasher->compare(
+$imageComparator->compare(
     sourceImage: 'your-images/your-image1.jpg',
     comparedImage: 'your-images/your-image2.jpg',
     rotation: 0,
@@ -250,7 +248,7 @@ Accepts the following arguments:
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
-$pHasher->compareArray(
+$imageComparator->compareArray(
     sourceImage: 'your-images/your-image1.jpg',
     images: ['image1' => 'your-images/your-image2.jpg', 'image2' => 'your-images/your-image2.jpg'],
     rotation: 0,
@@ -269,7 +267,7 @@ Accepts the following arguments:
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
-$pHasher->detect(
+$imageComparator->detect(
     sourceImage: 'your-images/your-image1.jpg',
     comparedImage: 'your-images/your-image2.jpg',
     precision: 2
@@ -287,7 +285,7 @@ Accepts the following arguments:
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
-$pHasher->detect(
+$imageComparator->detect(
     sourceImage: 'your-images/your-image1.jpg',
     comparedImage: ['image1' => 'your-images/your-image2.jpg', 'image2' => 'your-images/your-image2.jpg'],
     precision: 2
@@ -300,7 +298,7 @@ Create a square image resource from another rectangular image:
 ```php
 getimagesizefromstring('your-images/your-image1.jpg'); // width: 500, height: 250
 
-$squareImage = $pHasher->squareImage('your-images/your-image1.jpg');
+$squareImage = $imageComparator->squareImage('your-images/your-image1.jpg');
 
 imagesx($squareImage); // width: 500
 imagesy($squareImage); // height: 500
@@ -313,7 +311,7 @@ Convert the resulting array from `hashImage` to a binary string:
 ```php
 $hash = [0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0];
 
-$binaryString = $pHasher->convertHashToBinaryString($hash);
+$binaryString = $imageComparator->convertHashToBinaryString($hash);
 
 echo $binaryString // "0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0"
 ```
@@ -324,12 +322,12 @@ Compare hash strings. Rotation is not available:
 
 ```php
 $hash1 = [0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0];
-$binaryString1 = $pHasher->convertHashToBinaryString($hash1);
+$binaryString1 = $imageComparator->convertHashToBinaryString($hash1);
 
 $hash2 = [0,1,1,1,0,1,0,0,1,1,1,0,0,0,0,0];
-$binaryString2 = $pHasher->convertHashToBinaryString($hash2);
+$binaryString2 = $imageComparator->convertHashToBinaryString($hash2);
 
-$similarity = $pHasher->compareHashStrings($binaryString1, $binaryString2);
+$similarity = $imageComparator->compareHashStrings($binaryString1, $binaryString2);
 
 echo $similarity //93.8
 ```

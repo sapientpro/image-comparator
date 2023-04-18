@@ -1,27 +1,27 @@
 <?php
 
-namespace SapientPro\PHasher\Tests\Unit;
+namespace SapientPro\ImageComparator\Tests\Unit;
 
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use SapientPro\PHasher\ImageResourceException;
-use SapientPro\PHasher\PHasher;
+use SapientPro\ImageComparator\ImageResourceException;
+use SapientPro\ImageComparator\ImageComparator;
 
-class PHasherTest extends TestCase
+class ImageComparatorTest extends TestCase
 {
-    private PHasher $pHasher;
+    private ImageComparator $imageComparator;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->pHasher = new PHasher();
+        $this->imageComparator = new ImageComparator();
     }
 
     #[DataProvider('similarImagesProvider')]
     public function testCompareSimilarImages(string $image1, string $image2, float $expectedPercentage): void
     {
-        $result = $this->pHasher->compare($image1, $image2);
+        $result = $this->imageComparator->compare($image1, $image2);
 
         $this->assertGreaterThanOrEqual($expectedPercentage, $result);
     }
@@ -29,7 +29,7 @@ class PHasherTest extends TestCase
     #[DataProvider('similarImagesProvider')]
     public function testDetectSimilarImages(string $image1, string $image2, float $expectedPercentage): void
     {
-        $result = $this->pHasher->detect($image1, $image2);
+        $result = $this->imageComparator->detect($image1, $image2);
 
         $this->assertGreaterThanOrEqual($expectedPercentage, $result);
     }
@@ -37,7 +37,7 @@ class PHasherTest extends TestCase
     #[DataProvider('differentImagesProvider')]
     public function testCompareDifferentImages(string $image1, string $image2, float $expectedPercentage): void
     {
-        $result = $this->pHasher->compare($image1, $image2);
+        $result = $this->imageComparator->compare($image1, $image2);
 
         $this->assertLessThan($expectedPercentage, $result);
     }
@@ -45,7 +45,7 @@ class PHasherTest extends TestCase
     #[DataProvider('differentImagesProvider')]
     public function testDetectDifferentImages(string $image1, string $image2, float $expectedPercentage): void
     {
-        $result = $this->pHasher->detect($image1, $image2);
+        $result = $this->imageComparator->detect($image1, $image2);
 
         $this->assertLessThan($expectedPercentage, $result);
     }
@@ -55,7 +55,7 @@ class PHasherTest extends TestCase
         $this->expectException(ImageResourceException::class);
         $this->expectException(Exception::class);
 
-        $this->pHasher->compare('image', 'image');
+        $this->imageComparator->compare('image', 'image');
     }
 
     public function testDetectShouldThrowException(): void
@@ -63,12 +63,12 @@ class PHasherTest extends TestCase
         $this->expectException(ImageResourceException::class);
         $this->expectException(Exception::class);
 
-        $this->pHasher->detect('image', 'image');
+        $this->imageComparator->detect('image', 'image');
     }
 
     public function testSquareImage(): void
     {
-        $squareImage = $this->pHasher->squareImage('tests/images/flower2.jpg');
+        $squareImage = $this->imageComparator->squareImage('tests/images/flower2.jpg');
 
         $width = imagesx($squareImage);
         $height = imagesy($squareImage);
@@ -78,55 +78,55 @@ class PHasherTest extends TestCase
 
     public function testHashImage(): void
     {
-        $bits = $this->pHasher->hashImage('tests/images/flower2.jpg');
+        $bits = $this->imageComparator->hashImage('tests/images/flower2.jpg');
 
         $expectedString = "1110000011110000011110000111110000111110001111101001110010011000";
 
-        $resultString = $this->pHasher->convertHashToBinaryString($bits);
+        $resultString = $this->imageComparator->convertHashToBinaryString($bits);
 
         $this->assertSame(64, count($bits));
         $this->assertSame($expectedString, $resultString);
 
-        $differenceHashedBits = $this->pHasher->hashImage(
+        $differenceHashedBits = $this->imageComparator->hashImage(
             'tests/images/flower2.jpg',
-            hashType: PHasher::DIFFERENCE_HASH_TYPE
+            hashType: ImageComparator::DIFFERENCE_HASH_TYPE
         );
         $this->assertSame(64, count($differenceHashedBits));
 
-        $bits7x7 = $this->pHasher->hashImage('tests/images/flower2.jpg', size: 7);
+        $bits7x7 = $this->imageComparator->hashImage('tests/images/flower2.jpg', size: 7);
         $this->assertSame(49, count($bits7x7));
     }
 
     public function testCompareResources(): void
     {
-        $image1 = $this->pHasher->squareImage('tests/images/flower.jpg');
-        $image2 = $this->pHasher->squareImage('tests/images/flower2.jpg');
+        $image1 = $this->imageComparator->squareImage('tests/images/flower.jpg');
+        $image2 = $this->imageComparator->squareImage('tests/images/flower2.jpg');
 
-        $result = $this->pHasher->compare($image1, $image2);
+        $result = $this->imageComparator->compare($image1, $image2);
 
         $this->assertGreaterThan(70.00, $result);
     }
 
     public function testCompareHashStringsBinaryStrings(): void
     {
-        $hash1 = $this->pHasher->hashImage('tests/images/forest1.jpg');
-        $hashString1 = $this->pHasher->convertHashToBinaryString($hash1);
+        $hash1 = $this->imageComparator->hashImage('tests/images/forest1.jpg');
+        $hashString1 = $this->imageComparator->convertHashToBinaryString($hash1);
 
-        $hash2 = $this->pHasher->hashImage('tests/images/forest1-copyrighted.jpg');
-        $hashString2 = $this->pHasher->convertHashToBinaryString($hash2);
+        $hash2 = $this->imageComparator->hashImage('tests/images/forest1-copyrighted.jpg');
+        $hashString2 = $this->imageComparator->convertHashToBinaryString($hash2);
 
-        $result = $this->pHasher->compareHashStrings($hashString1, $hashString2);
+        $result = $this->imageComparator->compareHashStrings($hashString1, $hashString2);
 
         $this->assertSame(96.9, $result);
     }
 
     public function testFastHashImage(): void
     {
-        $bits = $this->pHasher->fastHashImage('tests/images/flower2.jpg');
+        $bits = $this->imageComparator->fastHashImage('tests/images/flower2.jpg');
 
         $expectedString = "1111000011110100111100000110101101111100000111001110000111100000";
 
-        $resultString = $this->pHasher->convertHashToBinaryString($bits);
+        $resultString = $this->imageComparator->convertHashToBinaryString($bits);
 
         $this->assertSame(64, count($bits));
         $this->assertSame($expectedString, $resultString);
@@ -138,7 +138,7 @@ class PHasherTest extends TestCase
         $image2 = 'tests/images/forest1-copyrighted.jpg';
         $image3 = 'tests/images/rose.jpg';
 
-        $result = $this->pHasher->compareArray($image1, ['key1' => $image2, 'key2' => $image3]);
+        $result = $this->imageComparator->compareArray($image1, ['key1' => $image2, 'key2' => $image3]);
 
         $this->assertArrayHasKey('key1', $result);
         $this->assertArrayHasKey('key2', $result);
@@ -150,7 +150,7 @@ class PHasherTest extends TestCase
         $image2 = 'tests/images/forest1-copyrighted.jpg';
         $image3 = 'tests/images/rose.jpg';
 
-        $result = $this->pHasher->compareArray($image1, ['key1' => $image2, 'key2' => $image3]);
+        $result = $this->imageComparator->compareArray($image1, ['key1' => $image2, 'key2' => $image3]);
 
         $this->assertArrayHasKey('key1', $result);
         $this->assertArrayHasKey('key2', $result);
@@ -163,7 +163,7 @@ class PHasherTest extends TestCase
 
         $expectedString = "1110000011110000011110000111110000111110001111101001110010011000";
 
-        $resultString = $this->pHasher->convertHashToBinaryString($hash);
+        $resultString = $this->imageComparator->convertHashToBinaryString($hash);
 
         $this->assertSame($expectedString, $resultString);
     }

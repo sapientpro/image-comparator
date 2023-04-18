@@ -1,6 +1,6 @@
 <?php
 
-namespace SapientPro\PHasher;
+namespace SapientPro\ImageComparator;
 
 use Exception;
 

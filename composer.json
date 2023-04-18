@@ -1,5 +1,5 @@
 {
-  "name": "sapientpro/phasher",
+  "name": "sapientpro/image-comparator",
   "description": "Library for image comparison",
   "require": {
     "php": "^8.1",
@@ -7,12 +7,12 @@
   },
   "autoload": {
     "psr-4": {
-      "SapientPro\\PHasher\\": "src"
+      "SapientPro\\ImageComparator\\": "src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "SapientPro\\PHasher\\Tests\\": "tests"
+      "SapientPro\\ImageComparator\\": "tests"
     }
   },
   "require-dev": {
