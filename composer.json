@@ -12,7 +12,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "SapientPro\\ImageComparator\\": "tests"
+      "SapientPro\\ImageComparator\\Tests\\": "tests"
     }
   },
   "require-dev": {
