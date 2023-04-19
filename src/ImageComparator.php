@@ -22,13 +22,13 @@ class ImageComparator
      */
     public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 1): array
     {
-        $result = [];
+        $similarityPercentages = [];
 
         foreach ($images as $key => $comparedImage) {
-            $result[$key] = $this->detect($sourceImage, $comparedImage, $precision);
+            $similarityPercentages[$key] = $this->detect($sourceImage, $comparedImage, $precision);
         }
 
-        return $result;
+        return $similarityPercentages;
     }
 
     /**
@@ -46,17 +46,17 @@ class ImageComparator
         GdImage|string $comparedImage,
         int $precision = 1
     ): float {
-        $result = 0;
+        $highestSimilarityPercentage = 0;
 
         for ($rotation = 0; $rotation <= 270; $rotation += 90) {
-            $newResult = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
+            $similarity = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
 
-            if ($newResult > $result) {
-                $result = $newResult;
+            if ($similarity > $highestSimilarityPercentage) {
+                $highestSimilarityPercentage = $similarity;
             }
         }
 
-        return $result;
+        return $highestSimilarityPercentage;
     }
 
     /**
@@ -99,13 +99,13 @@ class ImageComparator
         int $rotation = 0,
         int $precision = 1
     ): array {
-        $result = [];
+        $similarityPercentages = [];
 
         foreach ($images as $key => $comparedImage) {
-            $result[$key] = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
+            $similarityPercentages[$key] = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
         }
 
-        return $result;
+        return $similarityPercentages;
     }
 
     /**
@@ -134,9 +134,8 @@ class ImageComparator
     {
         $similarity = count($hash1);
 
-        // take the hamming distance between the hashes.
-        foreach ($hash1 as $key => $val) {
-            if ($val !== $hash2[$key]) {
+        foreach ($hash1 as $key => $bit) {
+            if ($bit !== $hash2[$key]) {
                 $similarity--;
             }
         }
@@ -154,7 +153,7 @@ class ImageComparator
      * Default is 0, allowed values are 90, 180, 270.
      * @param int $size the size of the thumbnail created from the original image.
      * The hash will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
-     * @param string $hashType - hashing type: aHash or dHash
+     * @param string $hashType - hashing type: average hashing (aHash) or difference hash (dHash)
      *
      * @return array
      * @throws ImageResourceException
@@ -217,7 +216,7 @@ class ImageComparator
             }
         }
 
-        $avg = $this->arrayAverage($pixels);
+        $average = floor(array_sum($pixels) / count($pixels));
 
         // create a hash (1 for pixels above the mean, 0 for average or below)
         $index = 0;
@@ -226,13 +225,13 @@ class ImageComparator
         // Use the difference hash (dHash) as per Dr. Neal Krawetz
         // http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html
         if (self::DIFFERENCE_HASH_TYPE === $hashType) {
-            foreach ($pixels as $ind => $px) {
+            foreach ($pixels as $key => $pixel) {
                 // Legendante - Uses the original 8*8 comparison originally suggested to Dr. Krawetz
                 // not the modified 9*8 as suggested by Dr. Krawetz
-                if (!isset($pixels[($ind + 1)])) {
-                    $ind = -1;
+                if (!isset($pixels[($key + 1)])) {
+                    $key = -1;
                 }
-                if ($px > $pixels[($ind + 1)]) {
+                if ($pixel > $pixels[($key + 1)]) {
                     $hash[] = 1;
                 } else {
                     $hash[] = 0;
@@ -240,8 +239,8 @@ class ImageComparator
             }
         } else {
             // Use the original average hash as per kennethrapp
-            foreach ($pixels as $px) {
-                if ($px > $avg) {
+            foreach ($pixels as $pixel) {
+                if ($pixel > $average) {
                     $hash[$index] = 1;
                 } else {
                     $hash[$index] = 0;
@@ -251,87 +250,6 @@ class ImageComparator
         }
 
         return $hash;
-    }
-
-    /**
-     * Heavily modified hashing from a bicubic resampling function by an unknown author here:
-     * http://php.net/manual/en/function.imagecopyresampled.php#78049
-     *
-     * This will scale down, desaturate and hash an image entirely in memory
-     * without the intermediate steps of altering the image resource and
-     * re-reading pixel data, and return a perceptual hash for that image.
-     * Doesn't support rotation yet and is not actually as fast as it could be due to the multiple looping.
-     *
-     * @param GdImage|string $image
-     * @param int $size
-     * @return array
-     * @throws ImageResourceException
-     */
-    public function fastHashImage(GdImage|string $image, int $size = 8): array
-    {
-        $pHash = [];
-
-        $image = $this->normalizeAsResource($image);
-
-        $hash = [];
-        $src_w = imagesx($image);
-        $src_h = imagesy($image);
-
-        $rX = $src_w / $size;
-        $rY = $src_h / $size;
-        $w = 0;
-
-        for ($y = 0; $y < $size; $y++) {
-            $ow = $w;
-            $w = round(($y + 1) * $rY);
-            $t = 0;
-            for ($x = 0; $x < $size; $x++) {
-                $r = $g = $b = 0;
-                $a = 0;
-                $ot = $t;
-                $t = round(($x + 1) * $rX);
-                for ($u = 0; $u < ($w - $ow); $u++) {
-                    for ($p = 0; $p < ($t - $ot); $p++) {
-                        $rgb = imagecolorat($image, $ot + $p, $ow + $u);
-
-                        $r = ($rgb >> 16) & 0xFF;
-                        $g = ($rgb >> 8) & 0xFF;
-                        $b = $rgb & 0xFF;
-
-                        $gs = floor((($r * 0.299) + ($g * 0.587) + ($b * 0.114)));
-                        $hash[$x][$y] = $gs;
-                    }
-                }
-            }
-        }
-
-        // reset all the indexes.
-        $nhash = [];
-        $xnormal = 0;
-
-        foreach ($hash as $xkey => $xval) {
-            foreach ($hash[$xkey] as $ykey => $yval) {
-                unset($hash[$xkey]);
-                $nhash[$xnormal][] = $yval;
-            }
-            $xnormal++;
-        }
-
-        // now hash (I really need to reduce the number of loops here.)
-        for ($x = 0; $x < $size; $x++) {
-            $avg = floor(array_sum($nhash[$x]) / count(array_filter($nhash[$x])));
-
-            for ($y = 0; $y < $size; $y++) {
-                $rgb = $nhash[$x][$y];
-                if ($rgb > $avg) {
-                    $pHash[] = 1;
-                } else {
-                    $pHash[] = 0;
-                }
-            }
-        }
-
-        return $pHash;
     }
 
     /**
@@ -354,14 +272,12 @@ class ImageComparator
             $y = ($width - $height) / 2;
             $xRect = 0;
             $yRect = ($width - $height) / 2 + $height;
-            $smallestSide = $height;
             $thumbSize = $width;
         } else {
             $x = ($height - $width) / 2;
             $y = 0;
             $xRect = ($height - $width) / 2 + $width;
             $yRect = 0;
-            $smallestSide = $width;
             $thumbSize = $height;
         }
 
@@ -408,10 +324,5 @@ class ImageComparator
         }
 
         return imagecreatefromstring($imageData);
-    }
-
-    private function arrayAverage(array $array): float
-    {
-        return floor(array_sum($array) / count($array));
     }
 }

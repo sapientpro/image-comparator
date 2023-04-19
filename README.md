@@ -7,7 +7,6 @@
   * [Usage](#usage)
   * [Available methods:](#available-methods)
       * [hashImage()](#hashimage)
-      * [fastHashImage()](#fasthashimage)
       * [compare()](#compare)
       * [compareArray()](#comparearray)
       * [detect()](#detect)
@@ -213,25 +212,6 @@ Accepted values are _"aHash"_ and _"dHash"_ for average and difference hashing r
 
 ```php
 $imageComparator->hashImage(image: 'your-images/your-image.jpg', rotation: 90, size: 16, hashType: 'dHash');
-```
-
-#### fastHashImage()
-Experimental hashing method. Heavily modified from a bicubic resampling function by an unknown author here:
-http://php.net/manual/en/function.imagecopyresampled.php#78049
-
-This will scale down, desaturate and hash an image entirely in memory 
-without the intermediate steps of altering the image resource and
-re-reading pixel data, and return a perceptual hash for that image.
-
-Doesn't support rotation
-
-Accepts image path or an instance of GdImage instance.
-Optionally accepts `$size` argument which determines the size of the hash
-
-Returns the same array as `hashImage()`
-
-```php
-$imageComparator->fastHashImage(image: 'your-images/your-image.jpg', size: 16);
 ```
 
 #### compare()

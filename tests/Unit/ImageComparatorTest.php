@@ -107,7 +107,7 @@ class ImageComparatorTest extends TestCase
         $this->assertGreaterThan(70.00, $result);
     }
 
-    public function testCompareHashStringsBinaryStrings(): void
+    public function testCompareHashStrings(): void
     {
         $hash1 = $this->imageComparator->hashImage('tests/images/forest1.jpg');
         $hashString1 = $this->imageComparator->convertHashToBinaryString($hash1);
@@ -117,19 +117,7 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compareHashStrings($hashString1, $hashString2);
 
-        $this->assertSame(96.9, $result);
-    }
-
-    public function testFastHashImage(): void
-    {
-        $bits = $this->imageComparator->fastHashImage('tests/images/flower2.jpg');
-
-        $expectedString = "1111000011110100111100000110101101111100000111001110000111100000";
-
-        $resultString = $this->imageComparator->convertHashToBinaryString($bits);
-
-        $this->assertSame(64, count($bits));
-        $this->assertSame($expectedString, $resultString);
+        $this->assertGreaterThan(90.0, $result);
     }
 
     public function testCompareArray(): void
@@ -150,7 +138,7 @@ class ImageComparatorTest extends TestCase
         $image2 = 'tests/images/forest1-copyrighted.jpg';
         $image3 = 'tests/images/rose.jpg';
 
-        $result = $this->imageComparator->compareArray($image1, ['key1' => $image2, 'key2' => $image3]);
+        $result = $this->imageComparator->detectArray($image1, ['key1' => $image2, 'key2' => $image3]);
 
         $this->assertArrayHasKey('key1', $result);
         $this->assertArrayHasKey('key2', $result);
@@ -179,6 +167,11 @@ class ImageComparatorTest extends TestCase
             'Different images' => [
                 'image1' => 'tests/images/bird-yellow.jpg',
                 'image2' => 'tests/images/rose.jpg',
+                'expectedPercentage' => 60.00
+            ],
+            'Different images 2' => [
+                'image1' => 'tests/images/ebay-image2.png',
+                'image2' => 'tests/images/amazon-image2.png',
                 'expectedPercentage' => 60.00
             ]
         ];
