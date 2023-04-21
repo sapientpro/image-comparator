@@ -5,8 +5,11 @@ namespace SapientPro\ImageComparator\Tests\Unit;
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use SapientPro\ImageComparator\Enum\ImageRotationAngle;
 use SapientPro\ImageComparator\ImageResourceException;
 use SapientPro\ImageComparator\ImageComparator;
+use SapientPro\ImageComparator\Strategy\AverageHashStrategy;
+use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
 
 class ImageComparatorTest extends TestCase
 {
@@ -34,6 +37,22 @@ class ImageComparatorTest extends TestCase
         $this->assertGreaterThanOrEqual($expectedPercentage, $result);
     }
 
+    #[DataProvider('similarImagesProvider')]
+    public function testDetectSimilarImagesDifferenceHash(
+        string $image1,
+        string $image2,
+        float $expectedPercentage
+    ): void {
+        $this->imageComparator->setHashStrategy(new DifferenceHashStrategy());
+
+        $result = $this->imageComparator->detect($image1, $image2);
+
+        $this->assertGreaterThanOrEqual($expectedPercentage, $result);
+    }
+
+    /**
+     * @throws ImageResourceException
+     */
     #[DataProvider('differentImagesProvider')]
     public function testCompareDifferentImages(string $image1, string $image2, float $expectedPercentage): void
     {
@@ -48,6 +67,16 @@ class ImageComparatorTest extends TestCase
         $result = $this->imageComparator->detect($image1, $image2);
 
         $this->assertLessThan($expectedPercentage, $result);
+    }
+
+    public function testCompareRotated(): void
+    {
+        $image = 'tests/images/flower2.jpg';
+        $imageRotated = 'tests/images/flower2-rotated.jpg';
+
+        $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90);
+
+        $this->assertSame(95.3, $result);
     }
 
     public function testCompareShouldThrowException(): void
@@ -87,11 +116,14 @@ class ImageComparatorTest extends TestCase
         $this->assertSame(64, count($bits));
         $this->assertSame($expectedString, $resultString);
 
+        $this->imageComparator->setHashStrategy(new DifferenceHashStrategy());
+
         $differenceHashedBits = $this->imageComparator->hashImage(
-            'tests/images/flower2.jpg',
-            hashType: ImageComparator::DIFFERENCE_HASH_TYPE
+            'tests/images/flower2.jpg'
         );
         $this->assertSame(64, count($differenceHashedBits));
+
+        $this->imageComparator->setHashStrategy(new AverageHashStrategy());
 
         $bits7x7 = $this->imageComparator->hashImage('tests/images/flower2.jpg', size: 7);
         $this->assertSame(49, count($bits7x7));

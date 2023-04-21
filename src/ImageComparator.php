@@ -3,60 +3,70 @@
 namespace SapientPro\ImageComparator;
 
 use GdImage;
+use SapientPro\ImageComparator\Enum\ImageRotationAngle;
+use SapientPro\ImageComparator\Strategy\AverageHashStrategy;
+use SapientPro\ImageComparator\Strategy\HashStrategy;
 
 class ImageComparator
 {
-    public const AVERAGE_HASH_TYPE = 'aHash';
-    public const DIFFERENCE_HASH_TYPE = 'dHash';
+    private HashStrategy $hashStrategy;
 
-    /**
-     * Array of images multi-pass comparison
-     * The compared image is being rotated by 90 degrees and compared for each rotation.
-     * Returns the highest match after comparing rotations for each array element.
-     *
-     * @param GdImage|string $sourceImage
-     * @param (GdImage|string)[] $images
-     * @param int $precision
-     * @return array
-     * @throws ImageResourceException
-     */
-    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 1): array
+    public function __construct()
     {
-        $similarityPercentages = [];
+        $this->hashStrategy = new AverageHashStrategy();
+    }
 
-        foreach ($images as $key => $comparedImage) {
-            $similarityPercentages[$key] = $this->detect($sourceImage, $comparedImage, $precision);
-        }
-
-        return $similarityPercentages;
+    public function setHashStrategy(HashStrategy $hashStrategy): void
+    {
+        $this->hashStrategy = $hashStrategy;
     }
 
     /**
-     * Multi-pass comparison - the compared image is being rotated by 90 degrees and compared for each rotation.
-     * Returns the highest match after comparing rotations.
+     * Hash two images and return an index of their similarly as a percentage.
      *
-     * @param GdImage|string $sourceImage
-     * @param GdImage|string $comparedImage
-     * @param int $precision
+     * @param  GdImage|string  $sourceImage
+     * @param  GdImage|string  $comparedImage
+     * @param  ImageRotationAngle  $rotation
+     * @param  int  $precision
      * @return float
      * @throws ImageResourceException
      */
-    public function detect(
+    public function compare(
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
+        ImageRotationAngle $rotation = ImageRotationAngle::D0,
         int $precision = 1
     ): float {
-        $highestSimilarityPercentage = 0;
+        $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
+        $hash2 = $this->hashImage($comparedImage, $rotation);
 
-        for ($rotation = 0; $rotation <= 270; $rotation += 90) {
-            $similarity = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
+        return $this->compareHashes($hash1, $hash2, $precision);
+    }
 
-            if ($similarity > $highestSimilarityPercentage) {
-                $highestSimilarityPercentage = $similarity;
-            }
+    /**
+     * Hash source image and each image in the array.
+     * Return an array of indexes of similarities as a percentage.
+     *
+     * @param  GdImage|string  $sourceImage
+     * @param  (GdImage|string)[]  $images
+     * @param  ImageRotationAngle  $rotation
+     * @param  int  $precision
+     * @return array
+     * @throws ImageResourceException
+     */
+    public function compareArray(
+        GdImage|string $sourceImage,
+        array $images,
+        ImageRotationAngle $rotation = ImageRotationAngle::D0,
+        int $precision = 1
+    ): array {
+        $similarityPercentages = [];
+
+        foreach ($images as $key => $comparedImage) {
+            $similarityPercentages[$key] = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
         }
 
-        return $highestSimilarityPercentage;
+        return $similarityPercentages;
     }
 
     /**
@@ -83,64 +93,53 @@ class ImageComparator
     }
 
     /**
-     * Hash source image and each image in the array.
-     * Return an array of indexes of similarities as a percentage.
-     *
-     * @param GdImage|string $sourceImage
-     * @param (GdImage|string)[] $images
-     * @param int $rotation
-     * @param int $precision
-     * @return array
-     * @throws ImageResourceException
-     */
-    public function compareArray(
-        GdImage|string $sourceImage,
-        array $images,
-        int $rotation = 0,
-        int $precision = 1
-    ): array {
-        $similarityPercentages = [];
-
-        foreach ($images as $key => $comparedImage) {
-            $similarityPercentages[$key] = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
-        }
-
-        return $similarityPercentages;
-    }
-
-    /**
-     * Hash two images and return an index of their similarly as a percentage.
+     * Multi-pass comparison - the compared image is being rotated by 90 degrees and compared for each rotation.
+     * Returns the highest match after comparing rotations.
      *
      * @param GdImage|string $sourceImage
      * @param GdImage|string $comparedImage
-     * @param int $rotation
      * @param int $precision
      * @return float
      * @throws ImageResourceException
      */
-    public function compare(
+    public function detect(
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
-        int $rotation = 0,
         int $precision = 1
     ): float {
-        $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
-        $hash2 = $this->hashImage($comparedImage, $rotation);
+        $highestSimilarityPercentage = 0;
 
-        return $this->compareHashes($hash1, $hash2, $precision);
-    }
+        foreach (ImageRotationAngle::cases() as $rotation) {
+            $similarity = $this->compare($sourceImage, $comparedImage, $rotation, $precision);
 
-    private function compareHashes(array $hash1, array $hash2, int $precision): float
-    {
-        $similarity = count($hash1);
-
-        foreach ($hash1 as $key => $bit) {
-            if ($bit !== $hash2[$key]) {
-                $similarity--;
+            if ($similarity > $highestSimilarityPercentage) {
+                $highestSimilarityPercentage = $similarity;
             }
         }
 
-        return round(($similarity / count($hash1) * 100), $precision);
+        return $highestSimilarityPercentage;
+    }
+
+    /**
+     * Array of images multi-pass comparison
+     * The compared image is being rotated by 90 degrees and compared for each rotation.
+     * Returns the highest match after comparing rotations for each array element.
+     *
+     * @param GdImage|string $sourceImage
+     * @param (GdImage|string)[] $images
+     * @param int $precision
+     * @return array
+     * @throws ImageResourceException
+     */
+    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 1): array
+    {
+        $similarityPercentages = [];
+
+        foreach ($images as $key => $comparedImage) {
+            $similarityPercentages[$key] = $this->detect($sourceImage, $comparedImage, $precision);
+        }
+
+        return $similarityPercentages;
     }
 
     /**
@@ -148,24 +147,19 @@ class ImageComparator
      * The hash is stored as an array of bits instead of a string.
      * http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
      *
-     * @param GdImage|string $image Filename/path to file or GdImage instance
-     * @param int $rotation Create the hash as if the image were rotated by this value.
+     * @param  GdImage|string  $image
+     * @param  ImageRotationAngle  $rotation  Create the hash as if the image were rotated by this value.
      * Default is 0, allowed values are 90, 180, 270.
      * @param int $size the size of the thumbnail created from the original image.
      * The hash will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
-     * @param string $hashType - hashing type: average hashing (aHash) or difference hash (dHash)
-     *
      * @return array
      * @throws ImageResourceException
      */
     public function hashImage(
         GdImage|string $image,
-        int $rotation = 0,
-        int $size = 8,
-        string $hashType = self::AVERAGE_HASH_TYPE
+        ImageRotationAngle $rotation = ImageRotationAngle::D0,
+        int $size = 8
     ): array {
-        $hash = [];
-
         $image = $this->normalizeAsResource($image);
         $imageCached = imagecreatetruecolor($size, $size);
 
@@ -175,81 +169,9 @@ class ImageComparator
         $width = imagesx($imageCached);
         $height = imagesy($imageCached);
 
-        $pixels = [];
+        $pixels = $this->processImagePixels($imageCached, $size, $height, $width, $rotation);
 
-        for ($y = 0; $y < $size; $y++) {
-            for ($x = 0; $x < $size; $x++) {
-//                  Instead of rotating the image, we'll rotate the position of the pixels.
-//                  This will allow us to generate a hash
-//                  that can be used to judge if one image is a rotated version of the other,
-//                  without actually creating an extra image resource.
-//                  This currently only works at all for 90 degree rotations.
-
-                switch ($rotation) {
-                    case 90:
-                        $rx = (($height - 1) - $y);
-                        $ry = $x;
-                        break;
-                    case 180:
-                        $rx = ($width - $x) - 1;
-                        $ry = ($height - 1) - $y;
-                        break;
-                    case 270:
-                        $rx = $y;
-                        $ry = ($height - $x) - 1;
-                        break;
-                    default:
-                        $rx = $x;
-                        $ry = $y;
-                }
-
-                $rgb = imagecolorsforindex($imageCached, imagecolorat($imageCached, $rx, $ry));
-
-                $r = $rgb['red'];
-                $g = $rgb['green'];
-                $b = $rgb['blue'];
-
-                $gs = (($r * 0.299) + ($g * 0.587) + ($b * 0.114));
-                $gs = floor($gs);
-
-                $pixels[] = $gs;
-            }
-        }
-
-        $average = floor(array_sum($pixels) / count($pixels));
-
-        // create a hash (1 for pixels above the mean, 0 for average or below)
-        $index = 0;
-
-        // Legendante - Added a check to use one of two hashes
-        // Use the difference hash (dHash) as per Dr. Neal Krawetz
-        // http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html
-        if (self::DIFFERENCE_HASH_TYPE === $hashType) {
-            foreach ($pixels as $key => $pixel) {
-                // Legendante - Uses the original 8*8 comparison originally suggested to Dr. Krawetz
-                // not the modified 9*8 as suggested by Dr. Krawetz
-                if (!isset($pixels[($key + 1)])) {
-                    $key = -1;
-                }
-                if ($pixel > $pixels[($key + 1)]) {
-                    $hash[] = 1;
-                } else {
-                    $hash[] = 0;
-                }
-            }
-        } else {
-            // Use the original average hash as per kennethrapp
-            foreach ($pixels as $pixel) {
-                if ($pixel > $average) {
-                    $hash[$index] = 1;
-                } else {
-                    $hash[$index] = 0;
-                }
-                $index += 1;
-            }
-        }
-
-        return $hash;
+        return $this->hashStrategy->hash($pixels);
     }
 
     /**
@@ -324,5 +246,56 @@ class ImageComparator
         }
 
         return imagecreatefromstring($imageData);
+    }
+
+    private function compareHashes(array $hash1, array $hash2, int $precision): float
+    {
+        $similarity = count($hash1);
+
+        foreach ($hash1 as $key => $bit) {
+            if ($bit !== $hash2[$key]) {
+                $similarity--;
+            }
+        }
+
+        return round(($similarity / count($hash1) * 100), $precision);
+    }
+
+    private function processImagePixels(
+        GdImage $imageResource,
+        int $size,
+        int $height,
+        int $width,
+        ImageRotationAngle $rotation = ImageRotationAngle::D0
+    ): array {
+        $pixels = [];
+
+        for ($y = 0; $y < $size; $y++) {
+            for ($x = 0; $x < $size; $x++) {
+//                  Instead of rotating the image, we'll rotate the position of the pixels.
+//                  This will allow us to generate a hash
+//                  that can be used to judge if one image is a rotated version of the other,
+//                  without actually creating an extra image resource.
+//                  This currently only works at all for 90 degree rotations.
+                $pixelPosition = $rotation->rotatePixel($x, $y, $height, $width);
+
+                $rgb = imagecolorsforindex(
+                    $imageResource,
+                    imagecolorat($imageResource, $pixelPosition['rx'], $pixelPosition['ry'])
+                );
+
+                $r = $rgb['red'];
+                $g = $rgb['green'];
+                $b = $rgb['blue'];
+
+                // rgb to grayscale conversion
+                $grayScale = (($r * 0.299) + ($g * 0.587) + ($b * 0.114));
+                $grayScale = floor($grayScale);
+
+                $pixels[] = $grayScale;
+            }
+        }
+
+        return $pixels;
     }
 }

@@ -41,15 +41,7 @@ To install the library, run:
 
 ## Usage
 
-`ImageComparator` is the core class of the library. To get started, you can either inject it or create the instance manually:
-
-```php
-use SapientPro\ImageComparator\ImageComparator;
-
-public function __construct(private ImageComparator $imageComparator)
-```
-
-or
+`ImageComparator` is the core class of the library:
 
 ```php
 use SapientPro\ImageComparator\ImageComparator;
@@ -57,7 +49,7 @@ use SapientPro\ImageComparator\ImageComparator;
 $imageComparator = new ImageComparator()
 ```
 
-After that you can use one of the methods available:
+After creating an instance you can use one of the methods available:
 
 ```php
 $imageComparator->compare('your-images/your-image1.jpg', 'your-images/your-image12.jpg');
@@ -108,12 +100,16 @@ $similarity = $imageComparator->compare($image1, $image2); //default hashing wit
 echo $similarity; //54.7
 ```
 
-The compared image can be rotated by 0 (default), 90, 180 and 270 degrees:
+Rotation angle can be passed if compared image is rotated.
+You must pass \SapientPro\ImageComparator\Enum\ImageRotationAngle enum with one of the following values:
+`D0` = 0 degress, `D90` = 90 degrees, `D180` = 180 degrees, `D270` = 270 degrees
 
 ```php
-$similarity = $imageComparator->compare($image1, $image2, 180); //compared image will be passed upside down
+use SapientPro\ImageComparator\Enum\ImageRotationAngle;
 
-echo $similarity; //45.33
+$similarity = $imageComparator->compare($image1, $image2, ImageRotationAngle::D180); //compared image will be considered rotated by 180 degrees
+
+echo $similarity; //95.3
 ```
 
 You can also use `detect()` method which will rotate the compared image and return the highest percentage of similarity:
@@ -125,9 +121,9 @@ $image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-
 $image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg'
 
 $imageComparator = new ImageComparator();
-$similarity = $imageComparator->detect($image1, $image2); //default hashing without rotation
+$similarity = $imageComparator->detect($image1, $image2);
 
-echo $similarity; //95.33
+echo $similarity; //95.3
 ```
 
 With `compareArray()` and `detectArray()` methods you can compare the source image to any number of images you want.
@@ -190,6 +186,28 @@ $similarity = $imageComparator->compareHashStrings($hashString1, $hashString2);
 echo $similarity //96.43;
 ```
 
+By default, images are hashed using the average hashing algorithm,
+which is implemented in `SapientPro\ImageComparator\Strategy\AverageHashStrategy`.
+This strategy is initialized in the constructor of `ImageComparator`.
+
+It is also possible to use difference hashing algorithm, implemented in SapientPro\ImageComparator\Strategy\DifferenceHashStrategy.
+To use it, you need to call ImageComparator's `setHashingStrategy()` method and pass the instance of the strategy:
+
+```php
+use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
+
+$imageComparator->setHashingStrategy(new DifferenceHashStrategy());
+$imageComparator->hashImage('image1.jpg');
+```
+
+If the strategy is set by `setHashingStrategy()`, it will be used under the hood in other comparison methods:
+
+```php
+use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
+
+$imageComparator->setHashingStrategy(new DifferenceHashStrategy());
+$imageComparator->compare('image1.jpg', 'image2.jpg'); // images will be hashed using difference hash algorithm and then compared
+```
 
 ## Available methods:
 #### hashImage()
@@ -204,14 +222,12 @@ The method accepts the following arguments:
 
 * `$image` - image path or an instance of GdImage created by _gd_ functions,
   e.g. imagecreatefromstring();
-* `$rotation` - image rotation angle, accepted values are: 0 (default), 90, 180 and 270;
+* `$rotation` - image rotation angle enum instance, e.g. ImageRotationAngle::D90;
 * `$size` - the size of the thumbnail created from the original image -
 the hash size will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
-* `$hashType` - the method of hashing - difference hashing or average hashing.
-Accepted values are _"aHash"_ and _"dHash"_ for average and difference hashing respectively
 
 ```php
-$imageComparator->hashImage(image: 'your-images/your-image.jpg', rotation: 90, size: 16, hashType: 'dHash');
+$imageComparator->hashImage(image: 'your-images/your-image.jpg', rotation: ImageRotationAngle::D90, size: 16);
 ```
 
 #### compare()
@@ -221,14 +237,14 @@ Accepts the following arguments:
 
 * `$sourceImage` - image path or an instance of GdImage of the image to compare to;
 * `$comparedImage` - image path or an instance of GdImage of the compared image;
-* `$rotation` - rotation angle of the compared image, accepted values are: 0 (default), 90, 180 and 270;
+* `$rotation` - image rotation angle enum instance, e.g. ImageRotationAngle::D90;
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
 $imageComparator->compare(
     sourceImage: 'your-images/your-image1.jpg',
     comparedImage: 'your-images/your-image2.jpg',
-    rotation: 0,
+    rotation: ImageRotationAngle::D90,
     precision: 2
     ) //86.32
 ```
@@ -243,14 +259,14 @@ Accepts the following arguments:
 
 * `$sourceImage` - image path or an instance of GdImage of the image to compare to;
 * `$images` - array of images;
-* `$rotation` - rotation angle of the compared image, accepted values are: 0 (default), 90, 180 and 270;
+* `$rotation` - image rotation angle enum instance, e.g. ImageRotationAngle::D90;
 * `$precision` - number of decimal points of the resulting percentage
 
 ```php
 $imageComparator->compareArray(
     sourceImage: 'your-images/your-image1.jpg',
     images: ['image1' => 'your-images/your-image2.jpg', 'image2' => 'your-images/your-image2.jpg'],
-    rotation: 0,
+    rotation: ImageRotationAngle::D90,
     precision: 2
     ) // ['image1' => 86.32, 'image2' => 21.33]
 ```
