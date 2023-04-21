@@ -328,7 +328,7 @@ $hash = [0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0];
 
 $binaryString = $imageComparator->convertHashToBinaryString($hash);
 
-echo $binaryString // "0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0"
+echo $binaryString // "0111010011110000"
 ```
 
 #### compareHashStrings()
