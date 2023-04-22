@@ -1,0 +1,26 @@
+{
+  "name": "sapientpro/image-comparator",
+  "description": "Library for image comparison",
+  "require": {
+    "php": "^8.1",
+    "ext-gd": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "SapientPro\\ImageComparator\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SapientPro\\ImageComparator\\Tests\\": "tests"
+    }
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "3.*",
+    "phpunit/phpunit": "10.0"
+  },
+  "scripts": {
+    "phpcs": "vendor/bin/phpcs .",
+    "tests-unit": "vendor/bin/phpunit --testsuite=unit"
+  }
+}
