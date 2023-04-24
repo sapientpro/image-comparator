@@ -88,7 +88,7 @@ The higher the result, the higher the similarity of images.
 Let's compare different images:
 
 ![Equals1](https://github.com/sapientpro/image-comparator/blob/master/tests/images/ebay-image2.png?raw=true)
-![Equals2](https://github.com/sapientpro/image-comparator/blob/naster/tests/images/amazon-image2.png?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/master/tests/images/amazon-image2.png?raw=true)
 
 ```php
 use SapientPro\ImageComparator\ImageComparator;
