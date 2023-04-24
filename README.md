@@ -16,7 +16,7 @@
       * [compareHashStrings()](#comparehashstrings)
 <!-- TOC -->
 
-Image Comparator is a library for image comparing and hashing.
+Image Comparator is a PHP library for image comparison and hashing.
 
 Based on https://github.com/kennethrapp/phasher package, with PHP 8 and PHPUnit support.
 The original project was abandoned in November 2017.
@@ -65,8 +65,10 @@ Example usage:
 
 We have two images:
 
-![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image.png?raw=true)
-![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image.png?raw=true)
+https://github.com/sapientpro/image-comparator/blob/master/tests/images/ebay-image.png?raw=true
+
+![Equals1](https://github.com/sapientpro/image-comparator/blob/master/tests/images/ebay-image.png?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/master/tests/images/amazon-image.png?raw=true)
 
 Now, let's compare them:
 
@@ -85,8 +87,8 @@ The higher the result, the higher the similarity of images.
 
 Let's compare different images:
 
-![Equals1](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/ebay-image2.png?raw=true)
-![Equals2](https://github.com/sapientpro/image-comparator/blob/feature/phasher-implementation/tests/images/amazon-image2.png?raw=true)
+![Equals1](https://github.com/sapientpro/image-comparator/blob/master/tests/images/ebay-image2.png?raw=true)
+![Equals2](https://github.com/sapientpro/image-comparator/blob/naster/tests/images/amazon-image2.png?raw=true)
 
 ```php
 use SapientPro\ImageComparator\ImageComparator;
