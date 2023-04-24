@@ -1,7 +1,7 @@
-# Image Comparator
+# Image Comparator: Compare images using PHP
 
 <!-- TOC -->
-* [Image Comparator](#image-comparator)
+* [Image Comparator: Compare images using PHP](#image-comparator-compare-images-using-php)
   * [Installation](#installation)
     * [Prerequisites](#prerequisites)
   * [Usage](#usage)
@@ -17,6 +17,7 @@
 <!-- TOC -->
 
 Image Comparator is a PHP library for image comparison and hashing.
+You can compare 2 and more images using perceptual hashing method.
 
 Based on https://github.com/kennethrapp/phasher package, with PHP 8 and PHPUnit support.
 The original project was abandoned in November 2017.
@@ -31,9 +32,6 @@ and [phash.org](http://phash.org).
 
 * PHP 8.1 or higher
 * gd extension enabled
-* Composer v2 installed
-* xml-writer extension enabled (dev only)
-* mbstring extension enabled (dev only)
 
 To install the library, run:
 
