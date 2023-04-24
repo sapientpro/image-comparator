@@ -1,6 +1,6 @@
 {
   "name": "sapientpro/image-comparator",
-  "description": "Library for image comparison",
+  "description": "Compare images using PHP",
   "require": {
     "php": "^8.1",
     "ext-gd": "*"
