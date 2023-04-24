@@ -1,6 +1,16 @@
 {
   "name": "sapientpro/image-comparator",
   "description": "Compare images using PHP",
+  "license": [
+    "MIT"
+  ],
+  "authors": [
+    {
+      "name": "SapientPro",
+      "email": "info@sapient.pro",
+      "homepage": "https://sapient.pro/"
+    }
+  ],
   "require": {
     "php": "^8.1",
     "ext-gd": "*"
