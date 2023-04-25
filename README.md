@@ -203,4 +203,4 @@ $imageComparator->compare('image1.jpg', 'image2.jpg'); // images will be hashed 
 
 ## Available methods
 
-You can read about available methods in our [wiki page](https://github.com/sapientpro/image-comparator/wiki/Image-Comparator)
+You can read about available methods in our [wiki page](https://github.com/sapientpro/image-comparator/wiki)
