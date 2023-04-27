@@ -4,7 +4,6 @@
 ![https://packagist.org/packages/sapientpro/image-comparator](https://img.shields.io/packagist/v/sapientpro/image-comparator)
 ![https://packagist.org/packages/sapientpro/image-comparator](https://img.shields.io/packagist/l/sapientpro/image-comparator)
 
-
 <!-- TOC -->
 * [Image Comparator: Compare images using PHP](#image-comparator-compare-images-using-php)
   * [Installation](#installation)
