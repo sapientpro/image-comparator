@@ -187,12 +187,12 @@ which is implemented in `SapientPro\ImageComparator\Strategy\AverageHashStrategy
 This strategy is initialized in the constructor of `ImageComparator`.
 
 It is also possible to use difference hashing algorithm, implemented in SapientPro\ImageComparator\Strategy\DifferenceHashStrategy.
-To use it, you need to call ImageComparator's `setHashingStrategy()` method and pass the instance of the strategy:
+To use it, you need to call ImageComparator's `setHashStrategy()` method and pass the instance of the strategy:
 
 ```php
 use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
 
-$imageComparator->setHashingStrategy(new DifferenceHashStrategy());
+$imageComparator->setHashStrategy(new DifferenceHashStrategy());
 $imageComparator->hashImage('image1.jpg');
 ```
 
@@ -201,7 +201,7 @@ If the strategy is set by `setHashingStrategy()`, it will be used under the hood
 ```php
 use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
 
-$imageComparator->setHashingStrategy(new DifferenceHashStrategy());
+$imageComparator->setHashStrategy(new DifferenceHashStrategy());
 $imageComparator->compare('image1.jpg', 'image2.jpg'); // images will be hashed using difference hash algorithm and then compared
 ```
 
