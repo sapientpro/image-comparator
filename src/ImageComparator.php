@@ -45,7 +45,7 @@ class ImageComparator
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
         ImageRotationAngle $rotation = ImageRotationAngle::D0,
-        int $precision = 1
+        int $precision = 3
     ): float {
         $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
         $hash2 = $this->hashImage($comparedImage, $rotation);
@@ -68,7 +68,7 @@ class ImageComparator
         GdImage|string $sourceImage,
         array $images,
         ImageRotationAngle $rotation = ImageRotationAngle::D0,
-        int $precision = 1
+        int $precision = 3
     ): array {
         $similarityPercentages = [];
 
@@ -90,7 +90,7 @@ class ImageComparator
      * @throws RoundingNecessaryException
      * @throws MathException
      */
-    public function compareHashStrings(string $hash1, string $hash2, int $precision = 1): float
+    public function compareHashStrings(string $hash1, string $hash2, int $precision = 3): float
     {
         $hashLength = BigDecimal::of(strlen($hash1));
         $similarity = $hashLength;
@@ -101,10 +101,10 @@ class ImageComparator
             }
         }
 
-        $percentage = $similarity->dividedBy($hashLength, $precision + 2, RoundingMode::HALF_UP)
+        $percentage = $similarity->dividedBy($hashLength, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(100);
 
-        return (float) $percentage->toScale($precision, RoundingMode::HALF_UP)->__toString();
+        return $percentage->toScale($precision, RoundingMode::HALF_UP)->toFloat();
     }
 
     /**
@@ -120,7 +120,7 @@ class ImageComparator
     public function detect(
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
-        int $precision = 1
+        int $precision = 3
     ): float {
         $highestSimilarityPercentage = 0;
 
@@ -146,7 +146,7 @@ class ImageComparator
      * @return array
      * @throws ImageResourceException
      */
-    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 1): array
+    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 3): array
     {
         $similarityPercentages = [];
 
@@ -300,10 +300,10 @@ class ImageComparator
             }
         }
 
-        $percentage = $similarity->dividedBy($totalBits, $precision + 2, RoundingMode::HALF_UP)
+        $percentage = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(BigDecimal::of(100));
 
-        return (float) $percentage->toScale($precision, RoundingMode::HALF_UP)->__toString();
+        return $percentage->toScale($precision, RoundingMode::HALF_UP)->toFloat();
     }
 
     /**
