@@ -2,8 +2,16 @@
 
 namespace SapientPro\ImageComparator\Strategy;
 
+use Brick\Math\BigDecimal;
+use Brick\Math\Exception\DivisionByZeroException;
+use Brick\Math\Exception\NumberFormatException;
+
 class DifferenceHashStrategy implements HashStrategy
 {
+    /**
+     * @throws NumberFormatException
+     * @throws DivisionByZeroException
+     */
     public function hash(array $pixels): array
     {
         $hash = [];
@@ -17,7 +25,11 @@ class DifferenceHashStrategy implements HashStrategy
             if (!isset($pixels[($key + 1)])) {
                 $key = -1;
             }
-            if ($pixel > $pixels[($key + 1)]) {
+
+            $currentPixel = BigDecimal::of($pixel);
+            $nextPixel = BigDecimal::of($pixels[$key + 1]);
+
+            if ($currentPixel->isGreaterThan($nextPixel)) {
                 $hash[] = 1;
             } else {
                 $hash[] = 0;

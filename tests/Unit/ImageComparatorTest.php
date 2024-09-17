@@ -76,7 +76,11 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90);
 
-        $this->assertSame(95.3, $result);
+        $this->assertSame(96.9, $result);
+
+        $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90, 10);
+
+        $this->assertSame(96.875, $result);
     }
 
     public function testCompareShouldThrowException(): void
@@ -103,6 +107,10 @@ class ImageComparatorTest extends TestCase
         $height = imagesy($squareImage);
 
         $this->assertSame($width, $height);
+
+        $result = $this->imageComparator->compare('tests/images/flower2.jpg', $squareImage);
+
+        $this->assertSame(48.4, $result);
     }
 
     public function testHashImage(): void
