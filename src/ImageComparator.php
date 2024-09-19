@@ -213,22 +213,18 @@ class ImageComparator
         if ($width->isGreaterThan($height)) {
             $x = BigDecimal::zero()->toInt();
             $y = $width->minus($height)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
-                ->toScale(2, RoundingMode::HALF_UP)
                 ->toInt();
             $xRect = BigDecimal::zero()->toInt();
             $yRect = $width->minus($height)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
                 ->plus($height)
-                ->toScale(2, RoundingMode::HALF_UP)
                 ->toInt();
             $thumbSize = $width->toInt();
         } else {
             $x = $height->minus($width)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
-                ->toScale(2, RoundingMode::HALF_UP)
                 ->toInt();
             $y = BigDecimal::zero()->toInt();
             $xRect = $height->minus($width)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
                 ->plus($width)
-                ->toScale(2, RoundingMode::HALF_UP)
                 ->toInt();
             $yRect = BigDecimal::zero()->toInt();
             $thumbSize = $height->toInt();
