@@ -104,7 +104,7 @@ class ImageComparator
         $percentage = $similarity->dividedBy($hashLength, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(100);
 
-        return $percentage->toScale($precision, RoundingMode::HALF_UP)->toFloat();
+        return $percentage->toFloat();
     }
 
     /**
@@ -299,7 +299,7 @@ class ImageComparator
         $percentage = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(BigDecimal::of(100));
 
-        return $percentage->toScale($precision, RoundingMode::HALF_UP)->toFloat();
+        return $percentage->toFloat();
     }
 
     /**
