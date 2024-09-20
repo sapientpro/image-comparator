@@ -2,7 +2,14 @@
 
 namespace SapientPro\ImageComparator;
 
+use Brick\Math\BigDecimal;
+use Brick\Math\Exception\DivisionByZeroException;
+use Brick\Math\Exception\MathException;
+use Brick\Math\Exception\NumberFormatException;
+use Brick\Math\Exception\RoundingNecessaryException;
+use Brick\Math\RoundingMode;
 use GdImage;
+use InvalidArgumentException;
 use SapientPro\ImageComparator\Enum\ImageRotationAngle;
 use SapientPro\ImageComparator\Strategy\AverageHashStrategy;
 use SapientPro\ImageComparator\Strategy\HashStrategy;
@@ -29,13 +36,16 @@ class ImageComparator
      * @param  ImageRotationAngle  $rotation
      * @param  int  $precision
      * @return float
-     * @throws ImageResourceException
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException|ImageResourceException
      */
     public function compare(
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
         ImageRotationAngle $rotation = ImageRotationAngle::D0,
-        int $precision = 1
+        int $precision = 3
     ): float {
         $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
         $hash2 = $this->hashImage($comparedImage, $rotation);
@@ -58,7 +68,7 @@ class ImageComparator
         GdImage|string $sourceImage,
         array $images,
         ImageRotationAngle $rotation = ImageRotationAngle::D0,
-        int $precision = 1
+        int $precision = 3
     ): array {
         $similarityPercentages = [];
 
@@ -77,19 +87,24 @@ class ImageComparator
      * @param string $hash2
      * @param int $precision
      * @return float
+     * @throws RoundingNecessaryException
+     * @throws MathException
      */
-    public function compareHashStrings(string $hash1, string $hash2, int $precision = 1): float
+    public function compareHashStrings(string $hash1, string $hash2, int $precision = 3): float
     {
-        $similarity = strlen($hash1);
+        $hashLength = BigDecimal::of(strlen($hash1));
+        $similarity = $hashLength;
 
-        // take the hamming distance between the strings.
-        for ($i = 0; $i < strlen($hash1); $i++) {
+        for ($i = 0; $i < $hashLength->toInt(); $i++) {
             if ($hash1[$i] !== $hash2[$i]) {
-                $similarity--;
+                $similarity = $similarity->minus(BigDecimal::one());
             }
         }
 
-        return round(($similarity / strlen($hash1) * 100), $precision);
+        $percentage = $similarity->dividedBy($hashLength, $precision, RoundingMode::HALF_UP)
+            ->multipliedBy(100);
+
+        return $percentage->toFloat();
     }
 
     /**
@@ -105,7 +120,7 @@ class ImageComparator
     public function detect(
         GdImage|string $sourceImage,
         GdImage|string $comparedImage,
-        int $precision = 1
+        int $precision = 3
     ): float {
         $highestSimilarityPercentage = 0;
 
@@ -131,7 +146,7 @@ class ImageComparator
      * @return array
      * @throws ImageResourceException
      */
-    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 1): array
+    public function detectArray(GdImage|string $sourceImage, array $images, int $precision = 3): array
     {
         $similarityPercentages = [];
 
@@ -153,7 +168,10 @@ class ImageComparator
      * @param int $size the size of the thumbnail created from the original image.
      * The hash will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
      * @return array
-     * @throws ImageResourceException
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException|ImageResourceException
      */
     public function hashImage(
         GdImage|string $image,
@@ -179,28 +197,37 @@ class ImageComparator
      *
      * @param string $image
      * @return GdImage|false
-     * @throws ImageResourceException
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException|ImageResourceException
      */
     public function squareImage(string $image): GdImage|false
     {
         $imageResource = $this->normalizeAsResource($image);
 
-        $width = imagesx($imageResource);
-        $height = imagesy($imageResource);
+        $width = BigDecimal::of(imagesx($imageResource));
+        $height = BigDecimal::of(imagesy($imageResource));
 
         // calculating the part of the image to use for new image
-        if ($width > $height) {
-            $x = 0;
-            $y = ($width - $height) / 2;
-            $xRect = 0;
-            $yRect = ($width - $height) / 2 + $height;
-            $thumbSize = $width;
+        if ($width->isGreaterThan($height)) {
+            $x = BigDecimal::zero()->toInt();
+            $y = $width->minus($height)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
+                ->toInt();
+            $xRect = BigDecimal::zero()->toInt();
+            $yRect = $width->minus($height)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
+                ->plus($height)
+                ->toInt();
+            $thumbSize = $width->toInt();
         } else {
-            $x = ($height - $width) / 2;
-            $y = 0;
-            $xRect = ($height - $width) / 2 + $width;
-            $yRect = 0;
-            $thumbSize = $height;
+            $x = $height->minus($width)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
+                ->toInt();
+            $y = BigDecimal::zero()->toInt();
+            $xRect = $height->minus($width)->dividedBy(BigDecimal::of(2), 0, RoundingMode::HALF_UP)
+                ->plus($width)
+                ->toInt();
+            $yRect = BigDecimal::zero()->toInt();
+            $thumbSize = $height->toInt();
         }
 
         // copying the part into new image
@@ -248,19 +275,39 @@ class ImageComparator
         return imagecreatefromstring($imageData);
     }
 
+    /**
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException
+     */
     private function compareHashes(array $hash1, array $hash2, int $precision): float
     {
-        $similarity = count($hash1);
+        if (count($hash1) !== count($hash2)) {
+            throw new InvalidArgumentException('Hashes must be of the same length.');
+        }
+
+        $totalBits = count($hash1);
+        $similarity = BigDecimal::of($totalBits);
 
         foreach ($hash1 as $key => $bit) {
             if ($bit !== $hash2[$key]) {
-                $similarity--;
+                $similarity = $similarity->minus(BigDecimal::one());
             }
         }
 
-        return round(($similarity / count($hash1) * 100), $precision);
+        $percentage = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
+            ->multipliedBy(BigDecimal::of(100));
+
+        return $percentage->toFloat();
     }
 
+    /**
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException
+     */
     private function processImagePixels(
         GdImage $imageResource,
         int $size,
@@ -284,15 +331,17 @@ class ImageComparator
                     imagecolorat($imageResource, $pixelPosition['rx'], $pixelPosition['ry'])
                 );
 
-                $r = $rgb['red'];
-                $g = $rgb['green'];
-                $b = $rgb['blue'];
+                $r = BigDecimal::of($rgb['red']);
+                $g = BigDecimal::of($rgb['green']);
+                $b = BigDecimal::of($rgb['blue']);
 
                 // rgb to grayscale conversion
-                $grayScale = (($r * 0.299) + ($g * 0.587) + ($b * 0.114));
-                $grayScale = floor($grayScale);
+                $grayScale = $r->multipliedBy('0.299')
+                    ->plus($g->multipliedBy('0.587'))
+                    ->plus($b->multipliedBy('0.114'))
+                    ->toScale(0, RoundingMode::HALF_UP);
 
-                $pixels[] = $grayScale;
+                $pixels[] = $grayScale->toInt();
             }
         }
 

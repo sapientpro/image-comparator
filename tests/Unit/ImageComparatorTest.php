@@ -76,7 +76,11 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90);
 
-        $this->assertSame(95.3, $result);
+        $this->assertSame(96.9, $result);
+
+        $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90, 10);
+
+        $this->assertSame(96.875, $result);
     }
 
     public function testCompareShouldThrowException(): void
@@ -103,6 +107,10 @@ class ImageComparatorTest extends TestCase
         $height = imagesy($squareImage);
 
         $this->assertSame($width, $height);
+
+        $result = $this->imageComparator->compare('tests/images/flower2.jpg', $squareImage);
+
+        $this->assertSame(48.4, $result);
     }
 
     public function testHashImage(): void
@@ -188,6 +196,82 @@ class ImageComparatorTest extends TestCase
         $this->assertSame($expectedString, $resultString);
     }
 
+    public function testCompareMany(): void
+    {
+        $image = 'test';
+        $filePath = 'results.csv';
+        $file = fopen($filePath, 'w');
+        fputcsv($file, ['Image_First', 'Image_Second', 'First_Result']);
+
+        $results = [];
+        for ($i = 1; $i <= 50; $i++) {
+            $image1 = $image . '.jpeg';
+            $image2 = $image . $i . '.jpeg';
+            $result = $this->imageComparator->compare(
+                'tests/images/test_comparison/' . $image1,
+                'tests/images/test_comparison/' . $image2,
+                ImageRotationAngle::D0,
+                20
+            );
+            $results[] = $result;
+            fputcsv($file, [$image1, $image2, $result]);
+        }
+
+        fclose($file);
+        $this->assertCount(50, $results);
+
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        $this->assertFileDoesNotExist($filePath);
+    }
+
+    public function testCompareNonImageFiles(): void
+    {
+        $this->expectException(ImageResourceException::class);
+
+        $this->imageComparator->compare('tests/files/document.txt', 'tests/files/document2.txt');
+    }
+
+    #[DataProvider('imageFormatsProvider')]
+    public function testCompareDifferentFormats(string $image1, string $image2, float $expectedPercentage): void
+    {
+        $result = $this->imageComparator->compare($image1, $image2);
+
+        $this->assertGreaterThanOrEqual($expectedPercentage, $result);
+    }
+
+    public function testCompareDifferentSizes(): void
+    {
+        $image1 = 'tests/images/forest.jpg';
+        $image2 = 'tests/images/forest_small.jpg';
+
+        $result = $this->imageComparator->compare($image1, $image2);
+
+        $this->assertGreaterThan(50, $result);
+    }
+
+    public function testCompareWithBrightnessContrastAdjustment(): void
+    {
+        $image1 = 'tests/images/flower.jpg';
+        $image2 = 'tests/images/forest_contrast.jpg';
+
+        $result = $this->imageComparator->compare($image1, $image2);
+
+        $this->assertGreaterThan(70, $result);
+    }
+
+    public function testCompareBlurredImages(): void
+    {
+        $image1 = 'tests/images/forest.jpg';
+        $image2 = 'tests/images/forest_blurred.jpg';
+
+        $result = $this->imageComparator->compare($image1, $image2);
+
+        $this->assertGreaterThan(65.00, $result);
+    }
+
     public static function differentImagesProvider(): array
     {
         return [
@@ -232,6 +316,15 @@ class ImageComparatorTest extends TestCase
                 'image2' => 'https://www.gstatic.com/webp/gallery/1.webp',
                 'expectedPercentage' => 90.00
             ]
+        ];
+    }
+
+    public static function imageFormatsProvider(): array
+    {
+        return [
+            ['tests/images/flower.jpg', 'tests/images/flower.png', 85.00],
+            ['tests/images/flower.gif', 'tests/images/flower.jpg', 90.00],
+            ['tests/images/flower.webp', 'tests/images/flower.png', 85.00],
         ];
     }
 }
