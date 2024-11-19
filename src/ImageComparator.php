@@ -49,8 +49,11 @@ class ImageComparator
     ): float {
         $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
         $hash2 = $this->hashImage($comparedImage, $rotation);
+        $color1 = $this->getAverageRGB($sourceImage);
+        $color2 = $this->getAverageRGB($comparedImage);
+        $similarityColor = $this->calculateSimilarity($color1, $color2);
 
-        return $this->compareHashes($hash1, $hash2, $precision);
+        return $this->compareHashes($hash1, $hash2, $precision, $similarityColor);
     }
 
     /**
@@ -281,7 +284,7 @@ class ImageComparator
      * @throws MathException
      * @throws NumberFormatException
      */
-    private function compareHashes(array $hash1, array $hash2, int $precision): float
+    private function compareHashes(array $hash1, array $hash2, int $precision, float $similarColor): float
     {
         if (count($hash1) !== count($hash2)) {
             throw new InvalidArgumentException('Hashes must be of the same length.');
@@ -298,6 +301,8 @@ class ImageComparator
 
         $percentage = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(BigDecimal::of(100));
+        $percentage = BigDecimal::of($percentage)->multipliedBy($similarColor);
+        $percentage = $percentage->toScale($precision, RoundingMode::HALF_UP);
 
         return $percentage->toFloat();
     }
@@ -346,5 +351,63 @@ class ImageComparator
         }
 
         return $pixels;
+    }
+
+    public function calculateRGBDistance($color1, $color2): float
+    {
+        $r1 = $color1['r'];
+        $g1 = $color1['g'];
+        $b1 = $color1['b'];
+
+        $r2 = $color2['r'];
+        $g2 = $color2['g'];
+        $b2 = $color2['b'];
+
+        return sqrt(pow($r1 - $r2, 2) + pow($g1 - $g2, 2) + pow($b1 - $b2, 2));
+    }
+
+    public function calculateSimilarity($color1, $color2): float
+    {
+        $maxRGBDifference = sqrt(pow(255, 2) + pow(255, 2) + pow(255, 2));
+        $distance = $this->calculateRGBDistance($color1, $color2);
+
+        return 1 - ($distance / $maxRGBDifference);
+    }
+
+    /**
+     * @throws ImageResourceException
+     */
+    public function getAverageRGB(
+        GdImage|string $image,
+        int $size = 8
+    ): array {
+        $image = $this->normalizeAsResource($image);
+        $imageResized = imagescale($image, $size, $size);
+
+        $width = imagesx($imageResized);
+        $height = imagesy($imageResized);
+
+        $totalRed = $totalGreen = $totalBlue = 0;
+        $totalPixels = $width * $height;
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $colorIndex = imagecolorat($imageResized, $x, $y);
+
+                $red = ($colorIndex >> 16) & 0xFF;
+                $green = ($colorIndex >> 8) & 0xFF;
+                $blue = $colorIndex & 0xFF;
+
+                $totalRed += $red;
+                $totalGreen += $green;
+                $totalBlue += $blue;
+            }
+        }
+
+        return [
+            'r' => round($totalRed / $totalPixels),
+            'g' => round($totalGreen / $totalPixels),
+            'b' => round($totalBlue / $totalPixels),
+        ];
     }
 }
