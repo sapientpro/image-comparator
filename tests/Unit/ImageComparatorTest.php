@@ -272,24 +272,6 @@ class ImageComparatorTest extends TestCase
         $this->assertGreaterThan(65.00, $result);
     }
 
-    public function testCompare1(): void
-    {
-        $image1 = 'tests/images/black.png';
-        $image2 = 'tests/images/white.png';
-
-        $result = $this->imageComparator->compare($image1, $image2);
-        $this->assertSame(0.0, $result);
-    }
-
-    public function testCompare2(): void
-    {
-        $image1 = 'tests/images/red.png';
-        $image2 = 'tests/images/blue.png';
-
-        $result = $this->imageComparator->compare($image1, $image2);
-        $this->assertGreaterThan(15, $result);
-    }
-
     public static function differentImagesProvider(): array
     {
         return [
@@ -307,6 +289,16 @@ class ImageComparatorTest extends TestCase
                 'image1' => 'tests/images/ebay-image2.png',
                 'image2' => 'tests/images/amazon-image2.png',
                 'expectedPercentage' => 60.00
+            ],
+            'Similar image black and white' => [
+                'image1' => 'tests/images/black.png',
+                'image2' => 'tests/images/white.png',
+                'expectedPercentage' => 1.00
+            ],
+            'Similar image red and blue' => [
+                'image1' => 'tests/images/red.png',
+                'image2' => 'tests/images/blue.png',
+                'expectedPercentage' => 20
             ]
         ];
     }

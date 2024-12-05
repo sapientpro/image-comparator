@@ -284,7 +284,7 @@ class ImageComparator
      * @throws MathException
      * @throws NumberFormatException
      */
-    private function compareHashes(array $hash1, array $hash2, int $precision, float $similarColor): float
+    private function compareHashes(array $hash1, array $hash2, int $precision, float $colorSimilarity): float
     {
         if (count($hash1) !== count($hash2)) {
             throw new InvalidArgumentException('Hashes must be of the same length.');
@@ -299,12 +299,12 @@ class ImageComparator
             }
         }
 
-        $percentage = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
+        $hashSimilarity = $similarity->dividedBy($totalBits, $precision, RoundingMode::HALF_UP)
             ->multipliedBy(BigDecimal::of(100));
-        $percentage = BigDecimal::of($percentage)->multipliedBy($similarColor);
-        $percentage = $percentage->toScale($precision, RoundingMode::HALF_UP);
+        $hashSimilarity = BigDecimal::of($hashSimilarity)->multipliedBy($colorSimilarity);
+        $hashSimilarity = $hashSimilarity->toScale($precision, RoundingMode::HALF_UP);
 
-        return $percentage->toFloat();
+        return $hashSimilarity->toFloat();
     }
 
     /**
@@ -353,7 +353,7 @@ class ImageComparator
         return $pixels;
     }
 
-    public function calculateRGBDistance($color1, $color2): float
+    private function calculateRGBDistance(array $color1, array $color2): float
     {
         $r1 = $color1['r'];
         $g1 = $color1['g'];
@@ -366,7 +366,7 @@ class ImageComparator
         return sqrt(pow($r1 - $r2, 2) + pow($g1 - $g2, 2) + pow($b1 - $b2, 2));
     }
 
-    public function calculateSimilarity($color1, $color2): float
+    private function calculateSimilarity(array $color1, array $color2): float
     {
         $maxRGBDifference = sqrt(pow(255, 2) + pow(255, 2) + pow(255, 2));
         $distance = $this->calculateRGBDistance($color1, $color2);
@@ -377,7 +377,7 @@ class ImageComparator
     /**
      * @throws ImageResourceException
      */
-    public function getAverageRGB(
+    private function getAverageRGB(
         GdImage|string $image,
         int $size = 8
     ): array {
