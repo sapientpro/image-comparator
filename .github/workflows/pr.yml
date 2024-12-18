@@ -1,10 +1,6 @@
 name: Image Comparator PR pipeline
 
 on:
-  push:
-    branches:
-      - github-actions
-
   pull_request:
     types:
       - assigned
