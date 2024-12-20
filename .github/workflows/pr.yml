@@ -11,7 +11,7 @@ on:
 
 jobs:
   phpunit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -29,7 +29,7 @@ jobs:
         run: ./vendor/bin/phpunit --testsuite=unit
 
   phpcs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
