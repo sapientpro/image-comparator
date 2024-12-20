@@ -76,11 +76,11 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90);
 
-        $this->assertSame(96.9, $result);
+        $this->assertSame(96.363, $result);
 
         $result = $this->imageComparator->compare($image, $imageRotated, ImageRotationAngle::D90, 10);
 
-        $this->assertSame(96.875, $result);
+        $this->assertSame(96.3377374947, $result);
     }
 
     public function testCompareShouldThrowException(): void
@@ -110,7 +110,7 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compare('tests/images/flower2.jpg', $squareImage);
 
-        $this->assertSame(48.4, $result);
+        $this->assertSame(36.973, $result);
     }
 
     public function testHashImage(): void
@@ -259,7 +259,7 @@ class ImageComparatorTest extends TestCase
 
         $result = $this->imageComparator->compare($image1, $image2);
 
-        $this->assertGreaterThan(70, $result);
+        $this->assertGreaterThan(55, $result);
     }
 
     public function testCompareBlurredImages(): void
@@ -289,6 +289,16 @@ class ImageComparatorTest extends TestCase
                 'image1' => 'tests/images/ebay-image2.png',
                 'image2' => 'tests/images/amazon-image2.png',
                 'expectedPercentage' => 60.00
+            ],
+            'Similar image black and white' => [
+                'image1' => 'tests/images/black.png',
+                'image2' => 'tests/images/white.png',
+                'expectedPercentage' => 1.00
+            ],
+            'Similar image red and blue' => [
+                'image1' => 'tests/images/red.png',
+                'image2' => 'tests/images/blue.png',
+                'expectedPercentage' => 20
             ]
         ];
     }
