@@ -272,6 +272,13 @@ class ImageComparatorTest extends TestCase
         $this->assertGreaterThan(65.00, $result);
     }
 
+    public function testUnsupportedImageFormat(): void
+    {
+        $this->expectException(ImageResourceException::class);
+
+        $this->imageComparator->compare('tests/images/flower.jpg', 'tests/images/unsupported-image-format.tif');
+    }
+
     public static function differentImagesProvider(): array
     {
         return [
