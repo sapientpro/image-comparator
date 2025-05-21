@@ -1,4 +1,4 @@
-# Image Comparator: Compare images using PHP
+# Image Comparator: Compare images using PHP 
 
 ![https://packagist.org/packages/sapientpro/image-comparator](https://img.shields.io/packagist/dt/sapientpro/image-comparator)
 ![https://packagist.org/packages/sapientpro/image-comparator](https://img.shields.io/packagist/v/sapientpro/image-comparator)
@@ -208,3 +208,5 @@ $imageComparator->compare('image1.jpg', 'image2.jpg'); // images will be hashed 
 ## Available methods
 
 You can read about available methods in our [wiki page](https://github.com/sapientpro/image-comparator/wiki)
+
+Developed by SapientPro Team - [Custom software development](https://sapient.pro)
