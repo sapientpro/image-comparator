@@ -16,6 +16,8 @@ use SapientPro\ImageComparator\Strategy\HashStrategy;
 
 class ImageComparator
 {
+    private const SERIALIZED_HASH_PREFIX = 'imgcmp-v1';
+
     private HashStrategy $hashStrategy;
 
     public function __construct()
@@ -31,11 +33,12 @@ class ImageComparator
     /**
      * Hash two images and return an index of their similarly as a percentage.
      *
-     * @param  GdImage|string  $sourceImage
-     * @param  GdImage|string  $comparedImage
-     * @param  ImageRotationAngle  $rotation
-     * @param  int  $precision
+     * @param GdImage|string $sourceImage Image source or serialized hash string
+     * @param GdImage|string $comparedImage Image source or serialized hash string
+     * @param ImageRotationAngle $rotation
+     * @param int $precision
      * @return float
+     * @throws InvalidArgumentException
      * @throws DivisionByZeroException
      * @throws RoundingNecessaryException
      * @throws MathException
@@ -47,25 +50,24 @@ class ImageComparator
         ImageRotationAngle $rotation = ImageRotationAngle::D0,
         int $precision = 3
     ): float {
-        $hash1 = $this->hashImage($sourceImage); // this one should never be rotated
-        $hash2 = $this->hashImage($comparedImage, $rotation);
-        $color1 = $this->getAverageRGB($sourceImage);
-        $color2 = $this->getAverageRGB($comparedImage);
-        $similarityColor = $this->calculateSimilarity($color1, $color2);
+        $sourcePayload = $this->normalizeComparableInput($sourceImage);
+        $comparedPayload = $this->normalizeComparableInput($comparedImage, $rotation);
+        $similarityColor = $this->calculateSimilarity($sourcePayload['color'], $comparedPayload['color']);
 
-        return $this->compareHashes($hash1, $hash2, $precision, $similarityColor);
+        return $this->compareHashes($sourcePayload['hash'], $comparedPayload['hash'], $precision, $similarityColor);
     }
 
     /**
      * Hash source image and each image in the array.
      * Return an array of indexes of similarities as a percentage.
      *
-     * @param  GdImage|string  $sourceImage
-     * @param  (GdImage|string)[]  $images
-     * @param  ImageRotationAngle  $rotation
-     * @param  int  $precision
+     * @param GdImage|string $sourceImage Image source or serialized hash string
+     * @param (GdImage|string)[] $images Image sources or serialized hash strings
+     * @param ImageRotationAngle $rotation
+     * @param int $precision
      * @return array
-     * @throws ImageResourceException
+     * @throws InvalidArgumentException
+     * @throws NumberFormatException|ImageResourceException
      */
     public function compareArray(
         GdImage|string $sourceImage,
@@ -80,6 +82,32 @@ class ImageComparator
         }
 
         return $similarityPercentages;
+    }
+
+    /**
+     * Create a serialized hash string that contains hash bits and average RGB.
+     *
+     * Format: imgcmp-v1:<binary_hash>:<r>:<g>:<b>
+     *
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException|ImageResourceException
+     */
+    public function serializeImageHash(GdImage|string $image, int $size = 8): string
+    {
+        $hashBits = $this->hashImage($image, ImageRotationAngle::D0, $size);
+        $hashString = $this->convertHashToBinaryString($hashBits);
+        $averageColor = $this->getAverageRGB($image, $size);
+
+        return sprintf(
+            '%s:%s:%d:%d:%d',
+            self::SERIALIZED_HASH_PREFIX,
+            $hashString,
+            $averageColor['r'],
+            $averageColor['g'],
+            $averageColor['b']
+        );
     }
 
     /**
@@ -165,8 +193,8 @@ class ImageComparator
      * The hash is stored as an array of bits instead of a string.
      * http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
      *
-     * @param  GdImage|string  $image
-     * @param  ImageRotationAngle  $rotation  Create the hash as if the image were rotated by this value.
+     * @param GdImage|string $image
+     * @param ImageRotationAngle $rotation Create the hash as if the image were rotated by this value.
      * Default is 0, allowed values are 90, 180, 270.
      * @param int $size the size of the thumbnail created from the original image.
      * The hash will be the square of this (so a value of 8 will build a hash out of 8x8 image, of 64 bits.)
@@ -247,7 +275,7 @@ class ImageComparator
 
     /**
      * Return binary string from an image hash created by hashImage()
-     * @param  array  $hash
+     * @param array $hash
      * @return string
      */
     public function convertHashToBinaryString(array $hash): string
@@ -282,6 +310,90 @@ class ImageComparator
         }
 
         return $normalizedImage;
+    }
+
+    /**
+     * Normalize comparable input into hash bits and average RGB values.
+     * Accepts either an image source/resource or a serialized hash payload.
+     *
+     * @param GdImage|string $image
+     * @param ImageRotationAngle $rotation
+     * @return array{hash: int[], color: array{r: int, g: int, b: int}}
+     * @throws DivisionByZeroException
+     * @throws RoundingNecessaryException
+     * @throws MathException
+     * @throws NumberFormatException|ImageResourceException
+     */
+    private function normalizeComparableInput(
+        GdImage|string $image,
+        ImageRotationAngle $rotation = ImageRotationAngle::D0
+    ): array {
+        if (is_string($image) && $this->isSerializedImageHash($image)) {
+            if ($rotation !== ImageRotationAngle::D0) {
+                throw new InvalidArgumentException(
+                    'Rotation is not supported for serialized hash strings. Use D0 or provide image sources.'
+                );
+            }
+
+            return $this->parseSerializedImageHash($image);
+        }
+
+        return [
+            'hash' => $this->hashImage($image, $rotation),
+            'color' => $this->getAverageRGB($image),
+        ];
+    }
+
+    /**
+     * Check whether the given value is a serialized hash payload.
+     *
+     * @param string $value
+     * @return bool
+     */
+    private function isSerializedImageHash(string $value): bool
+    {
+        return str_starts_with($value, self::SERIALIZED_HASH_PREFIX . ':');
+    }
+
+    /**
+     * Parse a serialized hash payload into hash bits and RGB channels.
+     *
+     * @param string $serializedHash
+     * @return array{hash: int[], color: array{r: int, g: int, b: int}}
+     * @throws InvalidArgumentException
+     */
+    private function parseSerializedImageHash(string $serializedHash): array
+    {
+        $pattern = '/^' . preg_quote(self::SERIALIZED_HASH_PREFIX, '/')
+            . ':(?<hash>[01]+):(?<r>\d{1,3}):(?<g>\d{1,3}):(?<b>\d{1,3})$/';
+
+        if (preg_match($pattern, $serializedHash, $matches) !== 1) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Invalid serialized hash format. Expected "%s:<binary_hash>:<r>:<g>:<b>".',
+                    self::SERIALIZED_HASH_PREFIX
+                )
+            );
+        }
+
+        $color = [
+            'r' => (int)$matches['r'],
+            'g' => (int)$matches['g'],
+            'b' => (int)$matches['b'],
+        ];
+
+        foreach ($color as $channel => $value) {
+            if ($value < 0 || $value > 255) {
+                throw new InvalidArgumentException(
+                    sprintf('Invalid %s channel value in serialized hash. Value must be between 0 and 255.', $channel)
+                );
+            }
+        }
+
+        return [
+            'hash' => array_map('intval', str_split($matches['hash'])),
+            'color' => $color,
+        ];
     }
 
     /**

@@ -182,6 +182,46 @@ $similarity = $imageComparator->compareHashStrings($hashString1, $hashString2);
 echo $similarity //96.43;
 ```
 
+If you want to compare using a single hash string input in `compare()` and `compareArray()`,
+you can create a serialized hash that includes both hash bits and average RGB:
+
+```php
+use SapientPro\ImageComparator\ImageComparator;
+
+$image1 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1.jpg';
+$image2 = 'https://raw.githubusercontent.com/sapientpro/phasher/feature/phasher-implementation/tests/images/forest1-copyrighted.jpg';
+
+$imageComparator = new ImageComparator();
+
+$serializedHash1 = $imageComparator->serializeImageHash($image1);
+$serializedHash2 = $imageComparator->serializeImageHash($image2);
+
+$similarity = $imageComparator->compare($serializedHash1, $serializedHash2);
+
+echo $similarity //96.43;
+```
+
+Serialized hash format:
+
+```text
+imgcmp-v1:<binary_hash>:<r>:<g>:<b>
+```
+
+`compareArray()` also accepts serialized hashes and mixed inputs:
+
+```php
+$similarity = $imageComparator->compareArray(
+    $serializedHash1,
+    [
+        'forest' => $serializedHash2,
+        'anotherForest' => $image2
+    ]
+);
+```
+
+Note: rotation (`ImageRotationAngle`) is supported when image sources are passed to `compare()`.
+For serialized hashes, only default rotation (`D0`) is supported.
+
 By default, images are hashed using the average hashing algorithm,
 which is implemented in `SapientPro\ImageComparator\Strategy\AverageHashStrategy`.
 This strategy is initialized in the constructor of `ImageComparator`.

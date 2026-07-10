@@ -3,6 +3,7 @@
 namespace SapientPro\ImageComparator\Tests\Unit;
 
 use Exception;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SapientPro\ImageComparator\Enum\ImageRotationAngle;
@@ -171,6 +172,36 @@ class ImageComparatorTest extends TestCase
         $this->assertGreaterThan(90.0, $result);
     }
 
+    public function testCompareSerializedHashes(): void
+    {
+        $image1 = 'tests/images/forest1.jpg';
+        $image2 = 'tests/images/forest1-copyrighted.jpg';
+
+        $serializedHash1 = $this->imageComparator->serializeImageHash($image1);
+        $serializedHash2 = $this->imageComparator->serializeImageHash($image2);
+
+        $expected = $this->imageComparator->compare($image1, $image2);
+        $result = $this->imageComparator->compare($serializedHash1, $serializedHash2);
+
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testCompareMixedSerializedHashAndImageInput(): void
+    {
+        $image1 = 'tests/images/forest1.jpg';
+        $image2 = 'tests/images/forest1-copyrighted.jpg';
+
+        $serializedHash1 = $this->imageComparator->serializeImageHash($image1);
+        $serializedHash2 = $this->imageComparator->serializeImageHash($image2);
+
+        $expected = $this->imageComparator->compare($image1, $image2);
+        $sourceSerializedResult = $this->imageComparator->compare($serializedHash1, $image2);
+        $comparedSerializedResult = $this->imageComparator->compare($image1, $serializedHash2);
+
+        $this->assertEquals($expected, $sourceSerializedResult);
+        $this->assertEquals($expected, $comparedSerializedResult);
+    }
+
     public function testCompareArray(): void
     {
         $image1 = 'tests/images/forest1.jpg';
@@ -181,6 +212,28 @@ class ImageComparatorTest extends TestCase
 
         $this->assertArrayHasKey('key1', $result);
         $this->assertArrayHasKey('key2', $result);
+    }
+
+    public function testCompareArrayWithSerializedHashes(): void
+    {
+        $image1 = 'tests/images/forest1.jpg';
+        $image2 = 'tests/images/forest1-copyrighted.jpg';
+        $image3 = 'tests/images/rose.jpg';
+
+        $sourceSerializedHash = $this->imageComparator->serializeImageHash($image1);
+        $comparedSerializedHash = $this->imageComparator->serializeImageHash($image2);
+
+        $result = $this->imageComparator->compareArray(
+            $sourceSerializedHash,
+            ['key1' => $comparedSerializedHash, 'key2' => $image3]
+        );
+
+        $expected = [
+            'key1' => $this->imageComparator->compare($image1, $image2),
+            'key2' => $this->imageComparator->compare($image1, $image3),
+        ];
+
+        $this->assertEquals($expected, $result);
     }
 
     public function testDetectArray(): void
@@ -244,6 +297,16 @@ class ImageComparatorTest extends TestCase
 
         $this->withErrorsIgnored(
             fn () => $this->imageComparator->compare('tests/files/document.txt', 'tests/files/document2.txt')
+        );
+    }
+
+    public function testCompareShouldThrowExceptionOnMalformedSerializedHashString(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->imageComparator->compare(
+            'imgcmp-v1:not-a-valid-payload',
+            'tests/images/forest.jpg'
         );
     }
 
