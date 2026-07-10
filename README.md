@@ -26,7 +26,7 @@ and [phash.org](http://phash.org).
 
 ### Prerequisites
 
-* PHP 8.1 or higher
+* PHP 8.2 or higher
 * gd extension enabled
 
 To install the library, run:
